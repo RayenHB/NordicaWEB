@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="View your Nordica Nutrition profile, track your shipments, and browse past orders.">
+  <title>My Profile — Nordica Nutrition</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .profile-wrap {
+      background: var(--black);
+      padding: 120px 0 80px;
+      min-height: 90vh;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 40px;
+      margin-top: 30px;
+    }
+
+    .profile-card {
+      background: var(--black-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: var(--shadow-dark);
+      height: fit-content;
+    }
+
+    /* Customer Info Panel */
+    .profile-user-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(232, 0, 13, 0.1);
+      border: 2px solid var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--red);
+      margin-bottom: 15px;
+      text-shadow: var(--shadow-red);
+    }
+
+    .profile-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .profile-role-badge {
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 3px 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      margin-top: 6px;
+      color: var(--gray-light);
+    }
+
+    .profile-details-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin: 20px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 20px;
+    }
+
+    .profile-detail-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.85rem;
+    }
+
+    .profile-detail-item i {
+      color: var(--red);
+      width: 16px;
+      text-align: center;
+    }
+
+    .profile-detail-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .profile-detail-label {
+      font-size: 0.7rem;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .profile-detail-val {
+      color: var(--white-soft);
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .btn-logout {
+      width: 100%;
+      padding: 11px;
+      background: rgba(232, 0, 13, 0.1);
+      border: 1.5px solid rgba(232, 0, 13, 0.2);
+      color: var(--red);
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: var(--transition);
+      margin-top: 10px;
+    }
+
+    .btn-logout:hover {
+      background: var(--red);
+      color: var(--white);
+      border-color: var(--red);
+      box-shadow: var(--shadow-red);
+    }
+
+    /* Order History Panel */
+    .orders-panel-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .orders-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .order-item-card {
+      background: var(--black-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 24px;
+      transition: var(--transition);
+    }
+
+    .order-item-card:hover {
+      border-color: rgba(232, 0, 13, 0.25);
+    }
+
+    .order-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+
+    .order-id-date {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .order-id {
+      font-family: monospace;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--white);
+    }
+
+    .order-date {
+      font-size: 0.75rem;
+      color: var(--gray);
+    }
+
+    .badge-status {
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+
+    .badge-status.pending {
+      background: rgba(255, 193, 7, 0.12);
+      border: 1px solid rgba(255, 193, 7, 0.3);
+      color: #FFC107;
+    }
+
+    .badge-status.in-transit {
+      background: rgba(0, 123, 255, 0.12);
+      border: 1px solid rgba(0, 123, 255, 0.3);
+      color: #007BFF;
+    }
+
+    .badge-status.delivered {
+      background: rgba(40, 167, 69, 0.12);
+      border: 1px solid rgba(40, 167, 69, 0.3);
+      color: #28A745;
+    }
+
+    .badge-status.cancelled {
+      background: rgba(220, 53, 69, 0.12);
+      border: 1px solid rgba(220, 53, 69, 0.3);
+      color: #DC3545;
+    }
+
+    .order-card-body {
+      font-size: 0.9rem;
+      color: var(--gray-light);
+      line-height: 1.6;
+    }
+
+    .order-products {
+      color: var(--white-soft);
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .order-meta-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      background: var(--black-3);
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.02);
+      margin-top: 15px;
+    }
+
+    .order-meta-col {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .order-meta-label {
+      font-size: 0.72rem;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .order-meta-val {
+      font-size: 0.85rem;
+      color: var(--white);
+      font-weight: 600;
+    }
+
+    .empty-orders {
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--black-2);
+      border: 1px dashed rgba(255,255,255,0.08);
+      border-radius: 20px;
+      color: var(--gray);
+    }
+
+    .empty-orders i {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      opacity: 0.2;
+    }
+
+    @media (max-width: 900px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Search Overlay -->
+  <div class="search-overlay" id="searchOverlay">
+    <button class="search-close" id="searchClose"><i class="fas fa-times"></i></button>
+    <div class="search-form">
+      <div class="search-input-wrap">
+        <i class="fas fa-search fa-lg"></i>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search products...">
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="cart-drawer-header">
+      <div class="cart-drawer-title"><i class="fas fa-shopping-bag"></i> Your Cart <span class="cart-drawer-count">0 items</span></div>
+      <button class="cart-close" id="cartClose"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty"><div class="cart-empty-icon"><i class="fas fa-shopping-bag"></i></div><p>Your cart is empty</p></div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-subtotal"><span class="cart-subtotal-label">Subtotal</span><span class="cart-subtotal-price">0 DT</span></div>
+      <p class="cart-shipping-note"><span>Free shipping</span> on orders over 300 DT</p>
+      <button class="btn btn-primary cart-checkout-btn"><i class="fas fa-lock"></i> Checkout Securely</button>
+    </div>
+  </aside>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-logo">
+        <img src="assets/logo.png" alt="Nordica Nutrition Logo">
+        <div class="nav-brand"><span class="nav-brand-name">NORDICA</span><span class="nav-brand-sub">Nutrition Store</span></div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="products.html" class="nav-link">Products</a></li>
+        <li><a href="packs.html" class="nav-link">Packs</a></li>
+        <li><a href="index.html#about" class="nav-link">About</a></li>
+        <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="nav-search-btn" id="searchBtn"><i class="fas fa-search"></i></button>
+        <button class="nav-cart-btn" id="cartBtn"><i class="fas fa-shopping-bag"></i><span class="cart-badge">0</span></button>
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </nav>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html" class="nav-link">Home</a>
+    <a href="products.html" class="nav-link">Products</a>
+    <a href="packs.html" class="nav-link">Packs</a>
+  </div>
+
+  <!-- Profile Section -->
+  <section class="profile-wrap">
+    <div class="container">
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="breadcrumb-sep">/</span><span>My Profile</span></div>
+      <h1 class="section-title">MY <span class="text-red">ACCOUNT</span></h1>
+
+      <div class="profile-grid">
+        
+        <!-- Left Column: User details panel -->
+        <aside class="profile-card">
+          <div class="profile-user-header">
+            <div class="profile-avatar" id="profAvatar">U</div>
+            <div class="profile-name" id="profName">Customer Profile</div>
+            <div class="profile-role-badge" id="profRole">Nordica Athlete</div>
+          </div>
+
+          <div class="profile-details-list">
+            <div class="profile-detail-item">
+              <i class="fas fa-envelope"></i>
+              <div class="profile-detail-info">
+                <span class="profile-detail-label">Email Address</span>
+                <span class="profile-detail-val" id="profEmail">—</span>
+              </div>
+            </div>
+            
+            <div class="profile-detail-item">
+              <i class="fas fa-phone"></i>
+              <div class="profile-detail-info">
+                <span class="profile-detail-label">Contact Number</span>
+                <span class="profile-detail-val" id="profPhone">—</span>
+              </div>
+            </div>
+
+            <div class="profile-detail-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <div class="profile-detail-info">
+                <span class="profile-detail-label">Governorate</span>
+                <span class="profile-detail-val" id="profWilaya">—</span>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-logout" id="logoutBtn">
+            <i class="fas fa-sign-out-alt"></i> Sign Out Account
+          </button>
+        </aside>
+
+        <!-- Right Column: Order History -->
+        <div class="profile-main">
+          <h2 class="orders-panel-title"><i class="fas fa-history" style="color:var(--red);"></i> Shipment History</h2>
+          
+          <div class="orders-list" id="ordersList">
+            <!-- Dynamically loaded -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:32px 0;border-top:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;gap:16px;">
+        <a href="index.html" class="nav-logo"><img src="assets/logo.png" alt="Logo" style="height:40px;"><div class="nav-brand"><span class="nav-brand-name">NORDICA</span></div></a>
+        <p class="footer-copy">© 2026 <span>Nordica Nutrition</span>. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/store.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[char]));
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      let currentUser;
+      try {
+        const response = await fetch('/api/auth/session');
+        if (!response.ok) throw new Error('Session expired');
+        currentUser = await response.json();
+        localStorage.setItem('nordica-user', JSON.stringify(currentUser));
+      } catch (err) {
+        await NordicaStore.logout();
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Populate user panel info
+      document.getElementById('profAvatar').textContent = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
+      document.getElementById('profName').textContent = currentUser.name || 'Customer Profile';
+      document.getElementById('profEmail').textContent = currentUser.email || '—';
+      document.getElementById('profPhone').textContent = currentUser.phone || 'N/A';
+      document.getElementById('profWilaya').textContent = currentUser.wilaya || 'N/A';
+
+      if (currentUser.role === 'admin') {
+        document.getElementById('profRole').textContent = "Administrator";
+        document.getElementById('profRole').style.color = "var(--red)";
+        
+        // Inject Admin Dashboard button
+        const adminBtn = document.createElement('a');
+        adminBtn.href = 'admin/index.html';
+        adminBtn.className = 'btn btn-primary btn-sm';
+        adminBtn.style.width = '100%';
+        adminBtn.style.marginTop = '15px';
+        adminBtn.style.display = 'flex';
+        adminBtn.style.alignItems = 'center';
+        adminBtn.style.justifyContent = 'center';
+        adminBtn.style.gap = '8px';
+        adminBtn.innerHTML = `<i class="fas fa-user-shield"></i> Admin Dashboard`;
+        
+        const card = document.querySelector('.profile-card');
+        const logoutBtn = document.getElementById('logoutBtn');
+        card.insertBefore(adminBtn, logoutBtn);
+      }
+
+      // Bind logout button
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await NordicaStore.logout();
+        window.location.href = 'login.html';
+      });
+
+      // Load and filter past deliveries
+      const deliveriesListEl = document.getElementById('ordersList');
+      deliveriesListEl.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--gray);"><i class="fas fa-spinner fa-spin" style="font-size:2rem; margin-bottom:10px;"></i><p>Querying order history...</p></div>`;
+
+      try {
+        const myOrders = await NordicaStore.get('my-deliveries');
+
+        if (myOrders.length === 0) {
+          deliveriesListEl.innerHTML = `
+            <div class="empty-orders">
+              <i class="fas fa-shopping-basket"></i>
+              <h3>No past orders found</h3>
+              <p>You haven't ordered any supplements yet. Ready to start your progress?</p>
+              <a href="products.html" class="btn btn-primary btn-sm" style="margin-top:15px; display:inline-block;"><i class="fas fa-bolt"></i> Shop Catalog</a>
+            </div>
+          `;
+          return;
+        }
+
+        deliveriesListEl.innerHTML = myOrders.map(d => {
+          const dateStr = d.createdAt ? d.createdAt.split('T')[0] : '';
+          return `
+            <div class="order-item-card">
+              <div class="order-card-header">
+                <div class="order-id-date">
+                  <span class="order-id">ID: ${escapeHtml(d.id)}</span>
+                  <span class="order-date">Placed on: ${escapeHtml(dateStr)} • Order Code: ${escapeHtml(d.orderId)}</span>
+                </div>
+                <span class="badge-status ${escapeHtml(d.status)}">${escapeHtml(d.status)}</span>
+              </div>
+              <div class="order-card-body">
+                <div class="order-products">${escapeHtml(d.products)}</div>
+                
+                <div class="order-meta-info">
+                  <div class="order-meta-col">
+                    <span class="order-meta-label">Delivery Address</span>
+                    <span class="order-meta-val">${escapeHtml(d.address)}, ${escapeHtml(d.wilaya)}</span>
+                  </div>
+                  <div class="order-meta-col">
+                    <span class="order-meta-label">Amount Due (COD)</span>
+                    <span class="order-meta-val" style="color:var(--white);">${Math.round(d.amount).toLocaleString()} DT</span>
+                  </div>
+                  <div class="order-meta-col">
+                    <span class="order-meta-label">Tracking Number</span>
+                    <span class="order-meta-val" style="font-family:monospace; color:var(--red);">${escapeHtml(d.trackingCode || 'Pending courier assign')}</span>
+                  </div>
+                </div>
+
+                ${d.notes ? `
+                  <div style="font-size:0.75rem; color:var(--gray); margin-top:12px; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 6px;">
+                    <strong>Courier Note:</strong> ${escapeHtml(d.notes)}
+                  </div>
+                ` : ''}
+
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error("Error loading profile history:", err);
+        deliveriesListEl.innerHTML = `<div style="color:var(--red); text-align:center; padding:40px;"><i class="fas fa-exclamation-triangle"></i> Error loading your history. Please try again later.</div>`;
+      }
+
+    });
+  </script>
+</body>
+</html>

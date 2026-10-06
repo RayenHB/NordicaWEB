@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sign in or register your account with Nordica Nutrition. Manage your orders, delivery status, and view past purchases.">
+  <title>Account Access — Nordica Nutrition</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    /* Premium Auth Card Styles */
+    .auth-page-wrap {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 24px;
+      position: relative;
+      overflow: hidden;
+      background: var(--black);
+    }
+
+    .auth-bg-glow {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(232, 0, 13, 0.15) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--black-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: var(--shadow-dark);
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(10px);
+      transition: var(--transition);
+    }
+
+    .auth-logo-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .auth-logo-center img {
+      height: 60px;
+      filter: drop-shadow(0 0 10px rgba(232, 0, 13, 0.2));
+    }
+
+    .auth-brand {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+
+    .auth-tabs {
+      display: flex;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 30px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--gray);
+      cursor: pointer;
+      transition: var(--transition);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+    }
+
+    .auth-tab.active, .auth-tab:hover {
+      color: var(--white);
+    }
+
+    .auth-tab.active {
+      border-color: var(--red);
+    }
+
+    .auth-form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .auth-label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--gray-light);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .auth-input-wrap {
+      position: relative;
+    }
+
+    .auth-input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+      font-size: 0.95rem;
+    }
+
+    .auth-input {
+      width: 100%;
+      padding: 12px 14px 12px 40px;
+      background: var(--black-3);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      color: var(--white);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .auth-input:focus {
+      border-color: rgba(232, 0, 13, 0.4);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .password-toggle-btn {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--gray);
+      cursor: pointer;
+      font-size: 0.95rem;
+      outline: none;
+      padding: 4px;
+    }
+
+    .password-toggle-btn:hover {
+      color: var(--white);
+    }
+
+    .auth-error-msg {
+      background: rgba(232, 0, 13, 0.12);
+      border: 1.5px solid rgba(232, 0, 13, 0.3);
+      color: #FF5A60;
+      font-size: 0.85rem;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .auth-error-msg i {
+      font-size: 1rem;
+    }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: var(--gray);
+      font-size: 0.8rem;
+      margin: 24px 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .auth-divider::before, .auth-divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .auth-divider:not(:empty)::before { margin-right: .75em; }
+    .auth-divider:not(:empty)::after { margin-left: .75em; }
+
+    .google-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--white);
+      color: var(--black);
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: var(--transition);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .google-btn:hover {
+      background: var(--white-soft);
+      transform: translateY(-2px);
+    }
+
+    .google-icon-svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Simulated Google Popup */
+    .google-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+
+    .google-modal.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .google-popup-card {
+      background: #FFFFFF;
+      color: #333333;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      padding: 24px;
+      font-family: 'Roboto', 'Outfit', sans-serif;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+      position: relative;
+    }
+
+    .google-popup-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .google-logo-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #5f6368;
+      margin-bottom: 12px;
+    }
+
+    .google-title {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #202124;
+    }
+
+    .google-subtitle {
+      font-size: 0.85rem;
+      color: #5f6368;
+      margin-top: 4px;
+    }
+
+    .google-accounts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .google-account-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .google-account-item:hover {
+      background: #f7f8f9;
+    }
+
+    .google-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--red);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .google-avatar.user-2 { background: #34A853; }
+    .google-avatar.user-3 { background: #4285F4; }
+    .google-avatar.user-new { background: #5f6368; }
+
+    .google-acct-info {
+      text-align: left;
+    }
+
+    .google-acct-name {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #3c4043;
+    }
+
+    .google-acct-email {
+      font-size: 0.75rem;
+      color: #5f6368;
+    }
+
+    .google-custom-acct-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-top: 1px solid #eee;
+      padding-top: 15px;
+      margin-top: 5px;
+    }
+
+    .google-custom-input {
+      padding: 8px 12px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .google-custom-input:focus {
+      border-color: #4285F4;
+    }
+
+    .google-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #9aa0a6;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Search Overlay -->
+  <div class="search-overlay" id="searchOverlay">
+    <button class="search-close" id="searchClose"><i class="fas fa-times"></i></button>
+    <div class="search-form">
+      <div class="search-input-wrap">
+        <i class="fas fa-search fa-lg"></i>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search products...">
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="cart-drawer-header">
+      <div class="cart-drawer-title"><i class="fas fa-shopping-bag"></i> Your Cart <span class="cart-drawer-count">0 items</span></div>
+      <button class="cart-close" id="cartClose"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty"><div class="cart-empty-icon"><i class="fas fa-shopping-bag"></i></div><p>Your cart is empty</p></div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-subtotal"><span class="cart-subtotal-label">Subtotal</span><span class="cart-subtotal-price">0 DT</span></div>
+      <p class="cart-shipping-note"><span>Free shipping</span> on orders over 300 DT</p>
+      <button class="btn btn-primary cart-checkout-btn"><i class="fas fa-lock"></i> Checkout Securely</button>
+    </div>
+  </aside>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-logo">
+        <img src="assets/logo.png" alt="Nordica Nutrition Logo">
+        <div class="nav-brand"><span class="nav-brand-name">NORDICA</span><span class="nav-brand-sub">Nutrition Store</span></div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="products.html" class="nav-link">Products</a></li>
+        <li><a href="packs.html" class="nav-link">Packs</a></li>
+        <li><a href="index.html#about" class="nav-link">About</a></li>
+        <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="nav-search-btn" id="searchBtn"><i class="fas fa-search"></i></button>
+        <button class="nav-cart-btn" id="cartBtn"><i class="fas fa-shopping-bag"></i><span class="cart-badge">0</span></button>
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </nav>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html" class="nav-link">Home</a>
+    <a href="products.html" class="nav-link">Products</a>
+    <a href="packs.html" class="nav-link">Packs</a>
+  </div>
+
+  <!-- Auth Wrapper -->
+  <section class="auth-page-wrap">
+    <div class="auth-bg-glow"></div>
+    
+    <div class="auth-card">
+      <div class="auth-logo-center">
+        <img src="assets/logo.png" alt="Logo">
+        <div class="auth-brand">NORDICA NUTRITION</div>
+      </div>
+
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tab-login-btn">Sign In</div>
+        <div class="auth-tab" id="tab-register-btn">Register</div>
+      </div>
+
+      <div id="auth-error-box" class="auth-error-msg" style="display: none;">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="auth-error-text">Incorrect credentials. Please try again.</span>
+      </div>
+
+      <!-- ==================== VIEW: LOGIN FORM ==================== -->
+      <form id="login-form">
+        <div class="auth-form-group">
+          <label class="auth-label" for="login-email">Email Address</label>
+          <div class="auth-input-wrap">
+            <i class="fas fa-envelope auth-input-icon"></i>
+            <input type="email" class="auth-input" id="login-email" required placeholder="e.g. kais@email.tn">
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label class="auth-label" for="login-password">Password</label>
+          <div class="auth-input-wrap">
+            <i class="fas fa-lock auth-input-icon"></i>
+            <input type="password" class="auth-input" id="login-password" required placeholder="••••••••" style="padding-right: 40px;">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('login-password', this)">
+              <i class="far fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-weight:700; margin-top: 10px;">
+          <i class="fas fa-sign-in-alt"></i> Sign In to Account
+        </button>
+      </form>
+
+      <!-- ==================== VIEW: REGISTER FORM ==================== -->
+      <form id="register-form" style="display: none;">
+        <div class="auth-form-group">
+          <label class="auth-label" for="reg-name">Full Name</label>
+          <div class="auth-input-wrap">
+            <i class="fas fa-user auth-input-icon"></i>
+            <input type="text" class="auth-input" id="reg-name" required placeholder="e.g. Youssef Gharbi">
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label class="auth-label" for="reg-email">Email Address</label>
+          <div class="auth-input-wrap">
+            <i class="fas fa-envelope auth-input-icon"></i>
+            <input type="email" class="auth-input" id="reg-email" required placeholder="e.g. youssef.g@email.tn">
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label class="auth-label" for="reg-phone">Phone Number</label>
+          <div class="auth-input-wrap">
+            <i class="fas fa-phone auth-input-icon"></i>
+            <input type="text" class="auth-input" id="reg-phone" required placeholder="e.g. +216 55 234 567">
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label class="auth-label" for="reg-wilaya">Governorate (Tunisia)</label>
+          <div class="auth-input-wrap">
+            <i class="fas fa-map-marker-alt auth-input-icon"></i>
+            <select class="auth-input" id="reg-wilaya" required style="padding-left: 40px; appearance:none;">
+              <option value="" disabled selected>Select Governorate</option>
+              <option value="Jendouba">Jendouba</option>
+              <option value="Tunis">Tunis</option>
+              <option value="Sousse">Sousse</option>
+              <option value="Sfax">Sfax</option>
+              <option value="Bizerte">Bizerte</option>
+              <option value="Nabeul">Nabeul</option>
+              <option value="Ariana">Ariana</option>
+              <option value="Ben Arous">Ben Arous</option>
+              <option value="Manouba">Manouba</option>
+              <option value="Zaghouan">Zaghouan</option>
+              <option value="Béja">Béja</option>
+              <option value="Le Kef">Le Kef</option>
+              <option value="Siliana">Siliana</option>
+              <option value="Kairouan">Kairouan</option>
+              <option value="Kassérine">Kassérine</option>
+              <option value="Sidi Bouzid">Sidi Bouzid</option>
+              <option value="Gabès">Gabès</option>
+              <option value="Medenine">Medenine</option>
+              <option value="Tataouine">Tataouine</option>
+              <option value="Gafsa">Gafsa</option>
+              <option value="Tozeur">Tozeur</option>
+              <option value="Kebili">Kebili</option>
+              <option value="Monastir">Monastir</option>
+              <option value="Mahdia">Mahdia</option>
+            </select>
+            <i class="fas fa-chevron-down" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--gray);"></i>
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label class="auth-label" for="reg-password">Password</label>
+          <div class="auth-input-wrap">
+            <i class="fas fa-lock auth-input-icon"></i>
+            <input type="password" class="auth-input" id="reg-password" required minlength="6" placeholder="At least 6 characters" style="padding-right: 40px;">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('reg-password', this)">
+              <i class="far fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-weight:700; margin-top: 10px;">
+          <i class="fas fa-user-plus"></i> Create Customer Account
+        </button>
+      </form>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:32px 0;border-top:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;gap:16px;">
+        <a href="index.html" class="nav-logo"><img src="assets/logo.png" alt="Logo" style="height:40px;"><div class="nav-brand"><span class="nav-brand-name">NORDICA</span></div></a>
+        <p class="footer-copy">© 2026 <span>Nordica Nutrition</span>. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/store.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // Tab controls
+    const tabLoginBtn = document.getElementById('tab-login-btn');
+    const tabRegisterBtn = document.getElementById('tab-register-btn');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const errorBox = document.getElementById('auth-error-box');
+    const errorText = document.getElementById('auth-error-text');
+
+    tabLoginBtn.addEventListener('click', () => {
+      tabLoginBtn.classList.add('active');
+      tabRegisterBtn.classList.remove('active');
+      loginForm.style.display = 'block';
+      registerForm.style.display = 'none';
+      errorBox.style.display = 'none';
+    });
+
+    tabRegisterBtn.addEventListener('click', () => {
+      tabRegisterBtn.classList.add('active');
+      tabLoginBtn.classList.remove('active');
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'block';
+      errorBox.style.display = 'none';
+    });
+
+    // Password visibility toggle
+    function togglePasswordVisibility(fieldId, button) {
+      const input = document.getElementById(fieldId);
+      const icon = button.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'far fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'far fa-eye';
+      }
+    }
+
+    // Handle standard Login Submit
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorBox.style.display = 'none';
+
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      const result = await NordicaStore.login(email, password);
+      if (result.success) {
+        if (result.user.role === 'admin') {
+          window.location.href = 'admin/index.html';
+        } else {
+          window.location.href = 'profile.html';
+        }
+      } else {
+        errorText.textContent = result.error || "Invalid credentials. Please verify your details.";
+        errorBox.style.display = 'flex';
+      }
+    });
+
+    // Handle standard Register Submit
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorBox.style.display = 'none';
+
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const phone = document.getElementById('reg-phone').value.trim();
+      const wilaya = document.getElementById('reg-wilaya').value;
+      const password = document.getElementById('reg-password').value;
+
+      if (!wilaya) {
+        errorText.textContent = "Please select your Governorate.";
+        errorBox.style.display = 'flex';
+        return;
+      }
+
+      const result = await NordicaStore.register(name, email, phone, wilaya, password);
+      if (result.success) {
+        window.location.href = 'profile.html';
+      } else {
+        errorText.textContent = result.error || "Registration failed. This email may already be registered.";
+        errorBox.style.display = 'flex';
+      }
+    });
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Browse all Nordica Nutrition products — Protein, Pre-Workout, Creatine, BCAA, Mass Gainers and more.">
+  <title>Products — Nordica Nutrition</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    /* ---- Product Detail Modal ---- */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 2000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(8px);
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .product-modal {
+      background: var(--black-2);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      position: relative;
+      transform: scale(0.92);
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    .modal-overlay.open .product-modal { transform: scale(1); }
+
+    .modal-img-side {
+      background: var(--black-3);
+      border-radius: 20px 0 0 20px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .modal-img-side::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(232,0,13,0.1) 0%, transparent 70%);
+    }
+    .modal-img { width: 100%; max-width: 280px; position: relative; z-index: 1; filter: drop-shadow(0 20px 40px rgba(232,0,13,0.3)); }
+
+    .modal-info-side { padding: 40px; display: flex; flex-direction: column; gap: 16px; }
+
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      width: 36px; height: 36px; border-radius: 8px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      color: var(--white); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; transition: var(--transition); z-index: 10;
+    }
+    .modal-close:hover { background: var(--red); border-color: var(--red); }
+
+    .modal-badge { display: inline-block; font-size: 0.7rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; background: var(--red); color: var(--white); width: fit-content; }
+    .modal-badge.new { background: #00C851; }
+    .modal-badge.hot { background: #FF6B00; }
+
+    .modal-category { font-size: 0.75rem; color: var(--red); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+    .modal-name { font-family: var(--font-display); font-size: 2rem; letter-spacing: 2px; line-height: 1.1; }
+    
+    .modal-price-row { display: flex; align-items: baseline; gap: 12px; }
+    .modal-price { font-family: var(--font-display); font-size: 2.2rem; color: var(--white); }
+    .modal-old-price { font-size: 1rem; color: var(--gray); text-decoration: line-through; }
+    .modal-savings { font-size: 0.8rem; color: #00C851; font-weight: 700; }
+
+    .modal-divider { height: 1px; background: rgba(255,255,255,0.06); }
+
+    .modal-desc { font-size: 0.9rem; color: var(--gray); line-height: 1.8; }
+
+    .modal-details { display: flex; flex-direction: column; gap: 8px; }
+    .modal-detail-item { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--gray-light); }
+    .modal-detail-item i { color: var(--red); font-size: 0.75rem; }
+
+    .modal-flavor-label { font-size: 0.8rem; color: var(--gray); font-weight: 600; margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; }
+    .modal-flavors { display: flex; flex-wrap: wrap; gap: 8px; }
+    .flavor-chip {
+      padding: 6px 14px; border-radius: 6px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      font: inherit; font-size: 0.8rem; cursor: pointer; transition: var(--transition); color: var(--gray-light);
+    }
+    .flavor-chip.active, .flavor-chip:hover { background: rgba(232,0,13,0.12); border-color: rgba(232,0,13,0.4); color: var(--red); }
+
+    .modal-stock { font-size: 0.8rem; color: #00C851; display: flex; align-items: center; gap: 6px; }
+    .modal-stock i { font-size: 0.7rem; }
+
+    .modal-ctas { display: flex; gap: 12px; }
+    .modal-ctas .btn { flex: 1; }
+
+    /* ---- Category Cards ---- */
+    .cat-section { padding: 80px 0 40px; }
+    .categories-scroll { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 12px; scrollbar-width: none; }
+    .categories-scroll::-webkit-scrollbar { display: none; }
+    
+    .cat-card {
+      flex-shrink: 0; width: 130px;
+      background: var(--black-2); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px; padding: 20px 16px; text-align: center;
+      cursor: pointer; transition: var(--transition); position: relative; overflow: hidden;
+    }
+    .cat-card::before { content: ''; position: absolute; inset: 0; background: var(--red); opacity: 0; transition: opacity 0.3s; }
+    .cat-card:hover, .cat-card.active { border-color: rgba(232,0,13,0.5); transform: translateY(-4px); }
+    .cat-card.active::before { opacity: 0.08; }
+    .cat-card.active .cat-card-icon, .cat-card:hover .cat-card-icon { transform: scale(1.15); }
+    
+    .cat-card-icon { font-size: 2rem; display: block; margin-bottom: 8px; transition: transform 0.3s; position: relative; }
+    .cat-card-name { font-size: 0.8rem; font-weight: 700; color: var(--white); position: relative; }
+    .cat-card-count { font-size: 0.7rem; color: var(--gray); position: relative; }
+
+    /* ---- Products Page Layout ---- */
+    .products-page-wrap { padding: 20px 0 80px; }
+    .products-layout { display: grid; grid-template-columns: 240px 1fr; gap: 32px; }
+
+    /* ---- Sidebar Filters ---- */
+    .filter-sidebar { position: sticky; top: 100px; align-self: start; }
+    .filter-sidebar-card {
+      background: var(--black-2); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px; padding: 24px; margin-bottom: 16px;
+    }
+    .filter-section-title {
+      font-size: 0.75rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--gray); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .filter-clear { font-size: 0.7rem; color: var(--red); cursor: pointer; font-weight: 600; }
+    .filter-check-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; cursor: pointer; }
+    .filter-check { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid rgba(255,255,255,0.15); background: transparent; cursor: pointer; accent-color: var(--red); }
+    .filter-check-label { font-size: 0.875rem; color: var(--gray-light); cursor: pointer; }
+    
+    .price-range { 
+      display: flex; flex-direction: column; gap: 14px; margin-top: 12px;
+    }
+    .price-inputs-row {
+      display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: end;
+    }
+    .price-input-wrapper {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .price-input-label {
+      font-size: 0.7rem; color: var(--gray); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .price-input {
+      padding: 10px 12px; background: var(--black-3); border: 1.5px solid rgba(255,255,255,0.1);
+      border-radius: 8px; color: var(--white); font-size: 0.9rem; outline: none; font-family: var(--font-body);
+      transition: var(--transition); width: 100%;
+    }
+    .price-input:hover { border-color: rgba(232,0,13,0.3); background: var(--black-3); }
+    .price-input:focus { 
+      border-color: rgba(232,0,13,0.6); background: rgba(232,0,13,0.08);
+      box-shadow: 0 0 0 3px rgba(232,0,13,0.1);
+    }
+    .price-input::placeholder { color: var(--gray); }
+    .price-input::-webkit-outer-spin-button,
+    .price-input::-webkit-inner-spin-button {
+      -webkit-appearance: none; margin: 0;
+    }
+    .price-input[type=number] { -moz-appearance: textfield; }
+    .price-sep { 
+      color: var(--gray); font-size: 1rem; 
+      align-self: flex-end; margin-bottom: 2px;
+    }
+    .price-slider-track {
+      width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; position: relative; margin-top: 8px;
+    }
+    .price-slider-fill {
+      height: 100%; background: linear-gradient(90deg, var(--red), rgba(232,0,13,0.6)); border-radius: 3px; position: absolute;
+    }
+    .price-display {
+      font-size: 0.85rem; color: var(--white); font-weight: 600; text-align: center; padding: 8px; background: rgba(232,0,13,0.08); border-radius: 6px; border: 1px solid rgba(232,0,13,0.2);
+    }
+
+    /* ---- Products Main Area ---- */
+    .products-main {}
+    .products-top-bar {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .search-bar-wrap {
+      flex: 1; min-width: 200px; position: relative;
+    }
+    .search-bar-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gray); font-size: 0.9rem; }
+    .search-bar {
+      width: 100%; padding: 11px 14px 11px 40px;
+      background: var(--black-2); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; color: var(--white); font-family: var(--font-body); font-size: 0.9rem; outline: none;
+      transition: var(--transition);
+    }
+    .search-bar:focus { border-color: rgba(232,0,13,0.4); background: var(--black-3); }
+    .search-bar::placeholder { color: var(--gray); }
+
+    .view-toggle { display: flex; gap: 4px; }
+    .view-btn {
+      width: 36px; height: 36px; border-radius: 6px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      color: var(--gray); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: var(--transition); font-size: 0.9rem;
+    }
+    .view-btn.active { background: rgba(232,0,13,0.12); border-color: rgba(232,0,13,0.4); color: var(--red); }
+
+    .results-count { font-size: 0.85rem; color: var(--gray); white-space: nowrap; }
+
+    .products-grid.list-view { grid-template-columns: 1fr; }
+    .products-grid.list-view .product-card { display: flex; flex-direction: row; }
+    .products-grid.list-view .product-card-img-wrap { width: 180px; flex-shrink: 0; aspect-ratio: auto; height: 180px; border-radius: 14px 0 0 14px; }
+    .products-grid.list-view .product-card-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+    .no-results { text-align: center; padding: 80px 20px; color: var(--gray); }
+    .no-results i { font-size: 3rem; opacity: 0.3; margin-bottom: 16px; }
+
+    @media (max-width: 900px) {
+      .products-layout { grid-template-columns: 1fr; }
+      .filter-sidebar { 
+        position: static; 
+        display: grid; 
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+        gap: 12px; 
+        margin-bottom: 24px;
+      }
+      .filter-sidebar-card { 
+        min-width: auto; 
+        flex-shrink: 0; 
+      }
+      .cat-card { width: 110px; }
+      .price-inputs-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .price-sep {
+        display: none;
+      }
+    }
+    @media (max-width: 640px) {
+      .product-modal { grid-template-columns: 1fr; }
+      .modal-img-side { border-radius: 20px 20px 0 0; }
+      .filter-sidebar { 
+        grid-template-columns: 1fr; 
+        gap: 10px; 
+      }
+      .filter-sidebar-card { 
+        min-width: auto; 
+        padding: 16px; 
+      }
+      .price-inputs-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .price-input {
+        font-size: 0.85rem;
+        padding: 8px 10px;
+      }
+      .price-input-label {
+        font-size: 0.65rem;
+      }
+      .filter-section-title {
+        font-size: 0.7rem;
+      }
+      .products-top-bar {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .search-bar-wrap {
+        min-width: 100%;
+      }
+      .results-count {
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Search Overlay -->
+  <div class="search-overlay" id="searchOverlay">
+    <button class="search-close" id="searchClose"><i class="fas fa-times"></i></button>
+    <div class="search-form">
+      <div class="search-input-wrap">
+        <i class="fas fa-search fa-lg"></i>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search products...">
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="cart-drawer-header">
+      <div class="cart-drawer-title"><i class="fas fa-shopping-bag"></i> Your Cart <span class="cart-drawer-count">0 items</span></div>
+      <button class="cart-close" id="cartClose"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty"><div class="cart-empty-icon"><i class="fas fa-shopping-bag"></i></div><p>Your cart is empty</p></div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-subtotal"><span class="cart-subtotal-label">Subtotal</span><span class="cart-subtotal-price">0 DT</span></div>
+      <p class="cart-shipping-note"><span>Free shipping</span> on orders over 300 DT</p>
+      <button class="btn btn-primary cart-checkout-btn"><i class="fas fa-lock"></i> Checkout Securely</button>
+    </div>
+  </aside>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-logo">
+        <img src="assets/logo.png" alt="Nordica Nutrition Logo">
+        <div class="nav-brand"><span class="nav-brand-name">NORDICA</span><span class="nav-brand-sub">Nutrition Store</span></div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="products.html" class="nav-link active">Products</a></li>
+        <li><a href="packs.html" class="nav-link">Packs</a></li>
+        <li><a href="index.html#about" class="nav-link">About</a></li>
+        <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="nav-search-btn" id="searchBtn"><i class="fas fa-search"></i></button>
+        <button class="nav-cart-btn" id="cartBtn"><i class="fas fa-shopping-bag"></i><span class="cart-badge">0</span></button>
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </nav>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html" class="nav-link">Home</a>
+    <a href="products.html" class="nav-link">Products</a>
+    <a href="packs.html" class="nav-link">Packs</a>
+  </div>
+
+  <!-- Product Detail Modal -->
+  <div class="modal-overlay" id="productModal">
+    <div class="product-modal" id="productModalInner">
+      <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+      <div class="modal-img-side">
+        <img src="" alt="" class="modal-img" id="modalImg">
+      </div>
+      <div class="modal-info-side" id="modalInfoSide">
+        <!-- Filled dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Page Hero -->
+  <section class="page-hero">
+    <div class="page-hero-inner container">
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="breadcrumb-sep">/</span><span>Products</span></div>
+      <div class="section-tag"><i class="fas fa-box"></i> Full Catalog</div>
+      <h1 class="section-title">ALL <span class="text-red">PRODUCTS</span></h1>
+      <p class="section-subtitle">Browse our complete range of premium supplements — all certified, authentic, and Jendouba-based, Tunisia-delivered.</p>
+    </div>
+  </section>
+
+  <!-- Category Pills -->
+  <section class="cat-section" style="background:var(--black-2); padding: 32px 0;">
+    <div class="container">
+      <div class="categories-scroll" id="categoriesRow">
+        <div class="cat-card active" data-cat="all">
+          <span class="cat-card-icon">🏆</span>
+          <div class="cat-card-name">All</div>
+          <div class="cat-card-count" id="count-all">—</div>
+        </div>
+        <!-- Injected by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Products Page -->
+  <div class="products-page-wrap" style="background:var(--black);">
+    <div class="container">
+      <div class="products-layout">
+
+        <!-- Sidebar -->
+        <aside class="filter-sidebar" id="filterSidebar">
+          <div class="filter-sidebar-card">
+            <div class="filter-section-title">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-tag"></i> Price Range
+              </div>
+              <span class="filter-clear" id="clearPrice">Reset</span>
+            </div>
+            <div class="price-range">
+              <div class="price-inputs-row">
+                <div class="price-input-wrapper">
+                  <label class="price-input-label">Minimum (DT)</label>
+                  <input type="number" class="price-input" id="priceMin" placeholder="0" min="0">
+                </div>
+                <span class="price-sep">—</span>
+                <div class="price-input-wrapper">
+                  <label class="price-input-label">Maximum (DT)</label>
+                  <input type="number" class="price-input" id="priceMax" placeholder="9999" min="0">
+                </div>
+              </div>
+              <div class="price-display" id="priceDisplay">Any Price</div>
+              <div class="price-slider-track">
+                <div class="price-slider-fill" id="priceSliderFill" style="left: 0%; right: 0%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-sidebar-card">
+            <div class="filter-section-title">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-cube"></i> Category
+              </div>
+              <span class="filter-clear" id="clearCategory">Reset</span>
+            </div>
+            <div id="categoryFilterList">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <div class="filter-sidebar-card">
+            <div class="filter-section-title">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-box"></i> Availability
+              </div>
+            </div>
+            <label class="filter-check-item">
+              <input type="checkbox" class="filter-check" id="inStockOnly">
+              <span class="filter-check-label">✓ In Stock Only</span>
+            </label>
+            <div style="padding: 8px 0; color: var(--gray); font-size: 0.75rem; border-top: 1px solid rgba(255,255,255,0.04); margin-top: 8px; padding-top: 8px;">
+              Ships from Jendouba, Tunisia
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="products-main">
+          <div class="products-top-bar">
+            <div class="search-bar-wrap">
+              <i class="fas fa-search search-bar-icon"></i>
+              <input type="text" class="search-bar" id="productSearch" placeholder="Search products..." autocomplete="off">
+            </div>
+            <span class="results-count" id="resultsCount">Loading...</span>
+            <select class="sort-select" id="sortSelect">
+              <option value="default">Sort: Default</option>
+              <option value="price-asc">Price: Low → High</option>
+              <option value="price-desc">Price: High → Low</option>
+              <option value="name">Name A–Z</option>
+            </select>
+            <div class="view-toggle">
+              <button class="view-btn active" id="gridViewBtn" title="Grid View"><i class="fas fa-th-large"></i></button>
+              <button class="view-btn" id="listViewBtn" title="List View"><i class="fas fa-list"></i></button>
+            </div>
+          </div>
+
+          <div class="products-grid" id="productsGrid">
+            <!-- Injected by JS -->
+          </div>
+          <div class="no-results" id="noResults" style="display:none;">
+            <i class="fas fa-search"></i>
+            <h3>No products found</h3>
+            <p>Try adjusting your filters or search term.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:32px 0;border-top:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;gap:16px;">
+        <a href="index.html" class="nav-logo"><img src="assets/logo.png" alt="Logo" style="height:40px;"><div class="nav-brand"><span class="nav-brand-name">NORDICA</span></div></a>
+        <p class="footer-copy">© 2025 <span>Nordica Nutrition</span>. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/store.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+  // Products Page JS
+  (function() {
+    let activeCategory = 'all';
+    let searchQuery = '';
+    let sortMode = 'default';
+    let viewMode = 'grid';
+    let categoryFilter = new Set();
+    let priceMin = null;
+    let priceMax = null;
+    let inStockOnly = false;
+    let selectedFlavor = {};
+
+    const grid = document.getElementById('productsGrid');
+    const noResults = document.getElementById('noResults');
+    const resultsCount = document.getElementById('resultsCount');
+    const catRow = document.getElementById('categoriesRow');
+
+    // Helper to resolve image paths (removes relative '../' prefix if present for root level pages)
+    const getCleanImgUrl = (path) => {
+      if (!path) return 'assets/logo.png';
+      if (path.startsWith('data:image/') || path.startsWith('http://') || path.startsWith('https://') || path.startsWith('/uploads/')) return path;
+      if (path.startsWith('../assets/')) return path.substring(3);
+      if (path.startsWith('assets/')) return path;
+      return 'assets/logo.png';
+    };
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[char]));
+    const parseArray = value => {
+      if (Array.isArray(value)) return value;
+      if (typeof value !== 'string') return [];
+      try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; }
+      catch { return []; }
+    };
+
+    // -- Load categories
+    async function loadCategories() {
+      const cats = await NordicaStore.get('categories');
+      const products = await NordicaStore.get('products');
+      
+      // Clear dynamically loaded categories
+      const dynamicCats = catRow.querySelectorAll('.cat-card:not([data-cat="all"])');
+      dynamicCats.forEach(c => c.remove());
+
+      cats.forEach(cat => {
+        const count = products.filter(p => p.categoryId === cat.id && p.active).length;
+        const card = document.createElement('div');
+        card.className = 'cat-card';
+        card.dataset.cat = cat.id;
+        card.innerHTML = `
+          <span class="cat-card-icon"><i class="fas ${escapeHtml(cat.icon)}"></i></span>
+          <div class="cat-card-name">${escapeHtml(cat.name)}</div>
+          <div class="cat-card-count">${count} items</div>
+        `;
+        card.addEventListener('click', () => setCat(cat.id));
+        catRow.appendChild(card);
+      });
+      if (activeCategory !== 'all' && !cats.some(cat => cat.id === activeCategory)) activeCategory = 'all';
+      document.querySelectorAll('.cat-card').forEach(card => card.classList.toggle('active', card.dataset.cat === activeCategory));
+      const allCount = products.filter(p => p.active).length;
+      document.getElementById('count-all').textContent = allCount + ' items';
+
+      // Populate category filter in sidebar
+      const categoryFilterList = document.getElementById('categoryFilterList');
+      categoryFilterList.innerHTML = cats.map(cat => `
+        <label class="filter-check-item">
+          <input type="checkbox" class="filter-check" value="${escapeHtml(cat.id)}" data-cat-filter>
+          <span class="filter-check-label">${escapeHtml(cat.name)}</span>
+        </label>
+      `).join('');
+
+      document.querySelectorAll('[data-cat-filter]').forEach(checkbox => {
+        checkbox.addEventListener('change', e => {
+          categoryFilter = new Set(Array.from(document.querySelectorAll('[data-cat-filter]:checked')).map(input => input.value));
+          renderProducts();
+        });
+      });
+    }
+
+    function setCat(id) {
+      activeCategory = id;
+      document.querySelectorAll('.cat-card').forEach(c => c.classList.toggle('active', c.dataset.cat === id));
+      renderProducts();
+    }
+
+    catRow.querySelector('.cat-card')?.addEventListener('click', () => setCat('all'));
+
+    async function renderProducts() {
+      let products = await NordicaStore.get('products');
+      products = products.filter(p => p.active);
+
+      // Category filter
+      if (activeCategory !== 'all') products = products.filter(p => p.categoryId === activeCategory);
+      // Search
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        products = products.filter(p => p.name.toLowerCase().includes(q) || p.categoryName.toLowerCase().includes(q) || (p.description && p.description.toLowerCase().includes(q)));
+      }
+      // Category filter (sidebar)
+      if (categoryFilter.size) products = products.filter(p => categoryFilter.has(p.categoryId));
+      // Price
+      if (priceMin !== null && priceMin !== '') products = products.filter(p => p.price >= parseFloat(priceMin));
+      if (priceMax !== null && priceMax !== '') products = products.filter(p => p.price <= parseFloat(priceMax));
+      // Stock
+      if (inStockOnly) products = products.filter(p => p.stock > 0);
+
+      // Sort
+      if (sortMode === 'price-asc') products.sort((a,b) => a.price - b.price);
+      else if (sortMode === 'price-desc') products.sort((a,b) => b.price - a.price);
+      else if (sortMode === 'name') products.sort((a,b) => a.name.localeCompare(b.name));
+
+      resultsCount.textContent = `${products.length} product${products.length !== 1 ? 's' : ''} found`;
+
+      if (products.length === 0) {
+        grid.innerHTML = '';
+        noResults.style.display = 'block';
+        return;
+      }
+      noResults.style.display = 'none';
+
+      grid.innerHTML = products.map(p => `
+        <div class="product-card fade-up visible" data-category="${escapeHtml(p.categoryId)}" data-id="${escapeHtml(p.id)}" style="cursor:pointer;">
+          <div class="product-card-img-wrap">
+            <img src="${escapeHtml(getCleanImgUrl(p.image))}" alt="${escapeHtml(p.name)}" class="product-card-img" loading="lazy" onerror="this.src='assets/logo.png'">
+            ${p.badge ? `<span class="product-badge ${escapeHtml(p.badgeType)}">${escapeHtml(p.badge)}</span>` : ''}
+            <div class="product-card-actions">
+              <button class="action-btn" type="button" data-open-product="${escapeHtml(p.id)}" title="Quick View"><i class="fas fa-eye"></i></button>
+            </div>
+          </div>
+          <div class="product-card-body">
+            <div class="product-category">${escapeHtml(p.categoryName)}</div>
+            <div class="product-name">${escapeHtml(p.name)}</div>
+            <div class="product-price-row">
+              <div class="product-price">
+                <span class="price-current">${Math.round(p.price).toLocaleString()}</span>
+                ${p.oldPrice ? `<span class="price-old">${Math.round(p.oldPrice).toLocaleString()} DT</span>` : '<span style="font-size:.75rem;color:#888"> DT</span>'}
+              </div>
+              <button class="btn-add-cart" ${Number(p.stock) <= 0 ? 'disabled title="Out of stock"' : ''}
+                data-add-cart data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name)}"
+                data-price="${Number(p.price)}" data-img="${escapeHtml(getCleanImgUrl(p.image))}" data-category="${escapeHtml(p.categoryName)}"
+                aria-label="Add to cart">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Click on card → modal
+      grid.querySelectorAll('[data-open-product]').forEach(button => {
+        button.addEventListener('click', event => {
+          event.stopPropagation();
+          openModal(button.dataset.openProduct);
+        });
+      });
+      grid.querySelectorAll('.product-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('[data-add-cart]') || e.target.closest('.action-btn')) return;
+          openModal(card.dataset.id);
+        });
+      });
+    }
+
+    // -- Product Modal
+    window.openModal = async function(id) {
+      const products = await NordicaStore.get('products');
+      const p = products.find(x => x.id === id);
+      if (!p || !p.active) return;
+
+      document.getElementById('modalImg').src = getCleanImgUrl(p.image);
+      document.getElementById('modalImg').alt = p.name;
+
+      const savings = p.oldPrice ? p.oldPrice - p.price : 0;
+
+      // Handle JSON arrays for flavors & details (parsed dynamically or safely checked)
+      const flavorsList = parseArray(p.flavors);
+      const detailsList = parseArray(p.details);
+      selectedFlavor[id] = flavorsList[0] && flavorsList[0] !== 'N/A' ? flavorsList[0] : '';
+
+      document.getElementById('modalInfoSide').innerHTML = `
+        ${p.badge ? `<span class="modal-badge ${escapeHtml(p.badgeType)}">${escapeHtml(p.badge)}</span>` : ''}
+        <div class="modal-category">${escapeHtml(p.categoryName)}</div>
+        <div class="modal-name">${escapeHtml(p.name)}</div>
+        <div class="modal-divider"></div>
+        <div class="modal-price-row">
+          <div class="modal-price">${Math.round(p.price).toLocaleString()} DT</div>
+          ${p.oldPrice ? `<div class="modal-old-price">${Math.round(p.oldPrice).toLocaleString()} DT</div>` : ''}
+          ${savings > 0 ? `<div class="modal-savings">Save ${Math.round(savings).toLocaleString()} DT</div>` : ''}
+        </div>
+        <div class="modal-divider"></div>
+        <div class="modal-desc">${escapeHtml(p.description || '')}</div>
+        <div class="modal-details">
+          ${detailsList.map(d => `<div class="modal-detail-item"><i class="fas fa-check-circle"></i> ${escapeHtml(d)}</div>`).join('')}
+        </div>
+        ${flavorsList.length > 0 && flavorsList[0] !== 'N/A' ? `
+          <div>
+            <div class="modal-flavor-label">Choose Flavor</div>
+            <div class="modal-flavors">
+              ${flavorsList.map((f,i) => `<button type="button" class="flavor-chip ${i===0?'active':''}" data-product-id="${escapeHtml(p.id)}" data-flavor="${escapeHtml(f)}">${escapeHtml(f)}</button>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+        <div class="modal-stock"><i class="fas fa-circle"></i> ${p.stock > 0 ? `${p.stock} units in stock` : 'Out of stock'}</div>
+        <div class="modal-ctas">
+          <button class="btn btn-primary" ${Number(p.stock) <= 0 ? 'disabled' : ''}
+            data-add-cart data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name)}"
+            data-price="${Number(p.price)}" data-img="${escapeHtml(getCleanImgUrl(p.image))}" data-category="${escapeHtml(p.categoryName)}"
+            data-flavor="${escapeHtml(selectedFlavor[id] || '')}">
+            <i class="fas fa-shopping-bag"></i> ${p.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+          </button>
+          <button class="btn btn-outline" onclick="window.closeProductModal()">
+            <i class="fas fa-eye"></i> Keep Browsing
+          </button>
+        </div>
+      `;
+
+      document.querySelectorAll('.flavor-chip').forEach(chip => {
+        chip.addEventListener('click', () => window.selectFlavor(chip, chip.dataset.productId, chip.dataset.flavor));
+      });
+
+      document.getElementById('productModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.selectFlavor = function(el, id, flavor) {
+      el.closest('.modal-flavors').querySelectorAll('.flavor-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      selectedFlavor[id] = flavor;
+      const addButton = document.querySelector('#modalInfoSide [data-add-cart]');
+      if (addButton) addButton.dataset.flavor = flavor;
+    };
+
+    window.closeProductModal = () => {
+      document.getElementById('productModal').classList.remove('open');
+      document.body.style.overflow = '';
+    };
+
+    document.getElementById('modalClose').addEventListener('click', () => {
+      window.closeProductModal();
+    });
+    document.getElementById('productModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('productModal')) {
+        window.closeProductModal();
+      }
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && document.getElementById('productModal').classList.contains('open')) {
+        window.closeProductModal();
+      }
+    });
+
+    // -- Controls
+    document.getElementById('productSearch').addEventListener('input', e => {
+      searchQuery = e.target.value;
+      renderProducts();
+    });
+
+    document.getElementById('sortSelect').addEventListener('change', e => {
+      sortMode = e.target.value;
+      renderProducts();
+    });
+
+    document.getElementById('gridViewBtn').addEventListener('click', () => {
+      viewMode = 'grid';
+      grid.classList.remove('list-view');
+      document.getElementById('gridViewBtn').classList.add('active');
+      document.getElementById('listViewBtn').classList.remove('active');
+    });
+
+    document.getElementById('listViewBtn').addEventListener('click', () => {
+      viewMode = 'list';
+      grid.classList.add('list-view');
+      document.getElementById('listViewBtn').classList.add('active');
+      document.getElementById('gridViewBtn').classList.remove('active');
+    });
+
+    document.getElementById('clearCategory').addEventListener('click', () => {
+      document.querySelectorAll('#categoryFilterList input[type="checkbox"]').forEach(c => c.checked = false);
+      categoryFilter = new Set(); renderProducts();
+    });
+
+    document.getElementById('priceMin').addEventListener('input', e => { 
+      priceMin = e.target.value; 
+      updatePriceDisplay();
+      renderProducts(); 
+    });
+    document.getElementById('priceMax').addEventListener('input', e => { 
+      priceMax = e.target.value; 
+      updatePriceDisplay();
+      renderProducts(); 
+    });
+    document.getElementById('clearPrice').addEventListener('click', () => {
+      document.getElementById('priceMin').value = '';
+      document.getElementById('priceMax').value = '';
+      priceMin = null; priceMax = null; 
+      updatePriceDisplay();
+      renderProducts();
+    });
+
+    function updatePriceDisplay() {
+      const minEl = document.getElementById('priceMin');
+      const maxEl = document.getElementById('priceMax');
+      const displayEl = document.getElementById('priceDisplay');
+      const fillEl = document.getElementById('priceSliderFill');
+      
+      const min = minEl.value || '0';
+      const max = maxEl.value || '9999';
+      
+      const minValue = minEl.value === '' ? 0 : Math.max(0, Number(minEl.value) || 0);
+      const maxValue = maxEl.value === '' ? 9999 : Math.max(0, Number(maxEl.value) || 0);
+      if (minValue === 0 && maxValue === 9999) {
+        displayEl.textContent = 'Any Price';
+      } else if (minEl.value !== '' && maxEl.value === '') {
+        displayEl.textContent = `From ${minValue} DT`;
+      } else if (minEl.value === '' && maxEl.value !== '') {
+        displayEl.textContent = `Up to ${maxValue} DT`;
+      } else {
+        displayEl.textContent = `${minValue} — ${maxValue} DT`;
+      }
+      fillEl.style.left = `${Math.min(100, minValue / 9999 * 100)}%`;
+      fillEl.style.right = `${Math.max(0, 100 - Math.min(100, maxValue / 9999 * 100))}%`;
+    }
+
+    document.getElementById('inStockOnly').addEventListener('change', e => {
+      inStockOnly = e.target.checked; renderProducts();
+    });
+
+    // Check URL param for category
+    const urlCat = new URLSearchParams(window.location.search).get('cat');
+    if (urlCat) activeCategory = urlCat;
+
+    async function initPage() {
+      await loadCategories();
+      await renderProducts();
+      
+      const urlProdId = new URLSearchParams(window.location.search).get('id');
+      if (urlProdId) {
+        openModal(urlProdId);
+      }
+    }
+    initPage();
+  })();
+  </script>
+</body>
+</html>

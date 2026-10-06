@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Browse Nordica Nutrition stacks and bundles — designed for beginners, athletes, and bulk gainers. Save up to 74 DT.">
+  <title>Goals Stacks & Packs — Nordica Nutrition</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    /* Custom style overrides for Packs page */
+    .pack-page-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 30px;
+      margin-top: 40px;
+    }
+    
+    .pack-card {
+      min-height: 480px;
+    }
+
+    /* ---- Pack Detail Modal ---- */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 2000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(8px);
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .pack-modal {
+      background: var(--black-2);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      transform: scale(0.92);
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+      padding: 40px;
+    }
+    .modal-overlay.open .pack-modal { transform: scale(1); }
+
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      width: 36px; height: 36px; border-radius: 8px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      color: var(--white); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; transition: var(--transition); z-index: 10;
+    }
+    .modal-close:hover { background: var(--red); border-color: var(--red); }
+
+    .modal-icon-header {
+      font-size: 3.5rem;
+      background: rgba(232, 0, 13, 0.1);
+      border: 1px solid rgba(232, 0, 13, 0.2);
+      width: 100px;
+      height: 100px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: var(--shadow-red);
+    }
+
+    .modal-name {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      letter-spacing: 2px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .modal-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+      margin: 20px 0;
+    }
+
+    .modal-desc {
+      font-size: 0.95rem;
+      color: var(--gray);
+      line-height: 1.7;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .modal-items-title {
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 12px;
+    }
+
+    .modal-items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    .modal-item-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+      color: var(--white-soft);
+    }
+
+    .modal-item-check {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(232,0,13,0.12);
+      border: 1px solid rgba(232,0,13,0.25);
+      color: var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+    }
+
+    .modal-pricing-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      background: var(--black-3);
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .modal-price-label {
+      font-size: 0.8rem;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .modal-price-value {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      color: var(--white);
+      line-height: 1;
+    }
+
+    .modal-savings-badge {
+      background: #00C851;
+      color: var(--white);
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 4px;
+      margin-top: 4px;
+      display: inline-block;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .modal-actions .btn {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Search Overlay -->
+  <div class="search-overlay" id="searchOverlay">
+    <button class="search-close" id="searchClose"><i class="fas fa-times"></i></button>
+    <div class="search-form">
+      <div class="search-input-wrap">
+        <i class="fas fa-search fa-lg"></i>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search bundles...">
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="cart-drawer-header">
+      <div class="cart-drawer-title"><i class="fas fa-shopping-bag"></i> Your Cart <span class="cart-drawer-count">0 items</span></div>
+      <button class="cart-close" id="cartClose"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty"><div class="cart-empty-icon"><i class="fas fa-shopping-bag"></i></div><p>Your cart is empty</p></div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-subtotal"><span class="cart-subtotal-label">Subtotal</span><span class="cart-subtotal-price">0 DT</span></div>
+      <p class="cart-shipping-note"><span>Free shipping</span> on orders over 300 DT</p>
+      <button class="btn btn-primary cart-checkout-btn"><i class="fas fa-lock"></i> Checkout Securely</button>
+    </div>
+  </aside>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-logo">
+        <img src="assets/logo.png" alt="Nordica Nutrition Logo">
+        <div class="nav-brand"><span class="nav-brand-name">NORDICA</span><span class="nav-brand-sub">Nutrition Store</span></div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="products.html" class="nav-link">Products</a></li>
+        <li><a href="packs.html" class="nav-link active">Packs</a></li>
+        <li><a href="index.html#about" class="nav-link">About</a></li>
+        <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="nav-search-btn" id="searchBtn"><i class="fas fa-search"></i></button>
+        <button class="nav-cart-btn" id="cartBtn"><i class="fas fa-shopping-bag"></i><span class="cart-badge">0</span></button>
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html" class="nav-link">Home</a>
+    <a href="products.html" class="nav-link">Products</a>
+    <a href="packs.html" class="nav-link">Packs</a>
+  </div>
+
+  <!-- Page Hero -->
+  <section class="page-hero">
+    <div class="page-hero-inner container">
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="breadcrumb-sep">/</span><span>Packs</span></div>
+      <div class="section-tag"><i class="fas fa-cubes"></i> Bundle & Save</div>
+      <h1 class="section-title">GOAL <span class="text-red">PACKS</span></h1>
+      <p class="section-subtitle">Achieve your targets faster. Handpicked combinations built to optimize your results while saving your money.</p>
+    </div>
+  </section>
+
+  <!-- Packs Grid Section -->
+  <section class="section-pad" style="background:var(--black); padding-top: 50px;">
+    <div class="container">
+      <div class="pack-page-grid" id="packsGrid">
+        <!-- Filled dynamically by JavaScript -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Pack Detail Modal -->
+  <div class="modal-overlay" id="packModal">
+    <div class="pack-modal">
+      <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+      <div class="modal-icon-header" id="modalEmoji">💪</div>
+      <h2 class="modal-name" id="modalName">Starter Pack</h2>
+      <div class="modal-divider"></div>
+      <p class="modal-desc" id="modalDesc">Pack Description...</p>
+      
+      <div class="modal-items-title">WHAT'S INCLUDED:</div>
+      <div class="modal-items-list" id="modalItems">
+        <!-- Injected dynamically -->
+      </div>
+      
+      <div class="modal-pricing-section">
+        <div>
+          <div class="modal-price-label">Bundle Price</div>
+          <div class="modal-price-value" id="modalPrice">0 DT</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="modal-price-label" style="text-decoration:line-through; font-size:0.9rem;" id="modalOriginalPrice">0 DT</div>
+          <div class="modal-savings-badge" id="modalSavings">Save 0 DT</div>
+        </div>
+      </div>
+      
+      <div class="modal-actions" id="modalActions">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:32px 0;border-top:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;gap:16px;">
+        <a href="index.html" class="nav-logo"><img src="assets/logo.png" alt="Logo" style="height:40px;"><div class="nav-brand"><span class="nav-brand-name">NORDICA</span></div></a>
+        <p class="footer-copy">© 2025 <span>Nordica Nutrition</span>. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Shared store & interactions -->
+  <script src="js/store.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    (function() {
+      const grid = document.getElementById('packsGrid');
+      const modal = document.getElementById('packModal');
+      const modalClose = document.getElementById('modalClose');
+      const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[char]));
+      const parseArray = value => {
+        if (Array.isArray(value)) return value;
+        if (typeof value !== 'string') return [];
+        try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; }
+        catch { return []; }
+      };
+
+      async function renderPacks() {
+        const packs = await NordicaStore.get('packs');
+        const activePacks = packs.filter(p => p.active);
+        
+        if (activePacks.length === 0) {
+          grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align:center; padding:80px 20px; color:var(--gray);">
+              <i class="fas fa-box-open" style="font-size:3rem; opacity:0.3; margin-bottom:16px;"></i>
+              <h3>No bundles available</h3>
+              <p>Check back later for exciting promo packs.</p>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = activePacks.map(p => {
+          const productNamesList = parseArray(p.productNames);
+          const iconHtml = p.emoji && p.emoji.startsWith('fa-') ? `<i class="fas ${escapeHtml(p.emoji)}"></i>` : escapeHtml(p.emoji || '💪');
+          return `
+            <div class="pack-card fade-up visible ${p.featured ? 'featured' : ''}" data-id="${escapeHtml(p.id)}" style="cursor:pointer;">
+              ${p.featured ? `<div class="pack-popular-badge">Best Value</div>` : ''}
+              <div class="pack-icon">${iconHtml}</div>
+              <div class="pack-name">${escapeHtml(p.name)}</div>
+              <div class="pack-desc">${escapeHtml(p.description)}</div>
+              <ul class="pack-items">
+                ${productNamesList.map(item => `
+                  <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>${escapeHtml(item)}</li>
+                `).join('')}
+              </ul>
+              <div class="pack-price-row">
+                <div class="pack-price">
+                  <span class="pack-price-current">${Math.round(p.price).toLocaleString()} DT</span>
+                  <span class="pack-price-save">Save ${Math.round(p.savings).toLocaleString()} DT</span>
+                </div>
+                <button class="btn btn-primary btn-sm" 
+                  data-add-cart 
+                  data-id="${escapeHtml(p.id)}" 
+                  data-name="${escapeHtml(p.name)}" 
+                  data-price="${Number(p.price)}" 
+                  data-img="assets/logo.png" 
+                  data-category="Pack">
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Card clicks open details modal
+        grid.querySelectorAll('.pack-card').forEach(card => {
+          card.addEventListener('click', (e) => {
+            if (e.target.closest('[data-add-cart]')) return;
+            openPackModal(card.dataset.id);
+          });
+        });
+      }
+
+      const getCleanImgUrl = (path) => {
+        if (!path) return 'assets/logo.png';
+        if (path.startsWith('data:image/') || path.startsWith('http://') || path.startsWith('https://') || path.startsWith('/uploads/')) return path;
+        if (path.startsWith('../assets/')) return path.substring(3);
+        if (path.startsWith('assets/')) return path;
+        return 'assets/logo.png';
+      };
+
+      async function openPackModal(id) {
+        const packs = await NordicaStore.get('packs');
+        const p = packs.find(x => x.id === id && x.active);
+        if (!p) return;
+
+        const emojiEl = document.getElementById('modalEmoji');
+        if (p.emoji && /^fa-[a-z0-9-]+$/.test(p.emoji)) {
+          emojiEl.innerHTML = `<i class="fas ${escapeHtml(p.emoji)}"></i>`;
+        } else {
+          emojiEl.textContent = p.emoji || '💪';
+        }
+        document.getElementById('modalName').textContent = p.name;
+        document.getElementById('modalDesc').textContent = p.description;
+        
+        const itemsList = document.getElementById('modalItems');
+        const productNamesList = parseArray(p.productNames);
+
+        const products = await NordicaStore.get('products');
+
+        itemsList.innerHTML = productNamesList.map(item => {
+          const matchedProd = products.find(prod => prod.name.toLowerCase().trim() === item.toLowerCase().trim() && prod.active);
+          const cleanImg = matchedProd ? getCleanImgUrl(matchedProd.image) : '';
+          return `
+            <div class="modal-item-row" 
+              style="display:flex; align-items:center; justify-content:space-between; background:var(--black-3); padding:10px 16px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); margin-bottom:8px; ${matchedProd ? 'cursor:pointer;' : ''}"
+              ${matchedProd ? `data-product-id="${escapeHtml(matchedProd.id)}"` : ''}
+              title="${matchedProd ? 'Click to view product details' : ''}">
+              <div style="display:flex; align-items:center; gap:12px;">
+                ${matchedProd ? `
+                  <img src="${escapeHtml(cleanImg)}" style="width:36px; height:36px; object-fit:contain; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));" onerror="this.src='assets/logo.png'">
+                ` : `
+                  <div style="width:36px; height:36px; border-radius:6px; background:rgba(232,0,13,0.1); display:flex; align-items:center; justify-content:center; color:var(--red); font-size:0.9rem;"><i class="fas fa-gift"></i></div>
+                `}
+                <span style="font-weight:600; font-size:0.9rem; color:var(--white);">${escapeHtml(item)}</span>
+              </div>
+              ${matchedProd ? `
+                <span style="font-size:0.75rem; color:var(--red); font-weight:700;"><i class="fas fa-eye"></i> View</span>
+              ` : `
+                <span style="font-size:0.75rem; color:var(--gray);"><i class="fas fa-check"></i> Included</span>
+              `}
+            </div>
+          `;
+        }).join('');
+
+        itemsList.querySelectorAll('[data-product-id]').forEach(item => {
+          item.addEventListener('click', () => {
+            window.location.href = `products.html?id=${encodeURIComponent(item.dataset.productId)}`;
+          });
+        });
+
+        document.getElementById('modalPrice').textContent = Math.round(p.price).toLocaleString() + ' DT';
+        document.getElementById('modalOriginalPrice').textContent = Math.round(p.originalPrice).toLocaleString() + ' DT';
+        document.getElementById('modalSavings').textContent = `Save ${Math.round(p.savings).toLocaleString()} DT`;
+
+        const actionsEl = document.getElementById('modalActions');
+        actionsEl.innerHTML = `
+          <button class="btn btn-primary" 
+            data-add-cart 
+            data-id="${escapeHtml(p.id)}" 
+            data-name="${escapeHtml(p.name)}" 
+            data-price="${Number(p.price)}" 
+            data-img="assets/logo.png" 
+            data-category="Pack">
+            <i class="fas fa-shopping-bag"></i> Add Stack to Cart
+          </button>
+          <button class="btn btn-outline" id="modalKeepBrowsing">
+            Keep Browsing
+          </button>
+        `;
+
+        // Bind keep browsing click
+        actionsEl.querySelector('#modalKeepBrowsing').addEventListener('click', closePackModal);
+
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closePackModal() {
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      modalClose.addEventListener('click', closePackModal);
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closePackModal();
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && modal.classList.contains('open')) closePackModal();
+      });
+
+      async function initPage() {
+        await renderPacks();
+        const urlPackId = new URLSearchParams(window.location.search).get('id');
+        if (urlPackId) {
+          openPackModal(urlPackId);
+        }
+      }
+      initPage();
+    })();
+  </script>
+</body>
+</html>

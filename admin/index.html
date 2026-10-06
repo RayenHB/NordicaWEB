@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    (function() {
+      document.documentElement.style.visibility = 'hidden';
+      fetch('../api/auth/session')
+          .then(response => response.ok ? response.json() : Promise.reject(new Error('Session expired')))
+          .then(user => {
+            if (user.role !== 'admin') return window.location.replace('../login.html');
+            localStorage.setItem('nordica-user', JSON.stringify(user));
+            const name = document.querySelector('.admin-name');
+            const avatar = document.querySelector('.admin-avatar');
+            if (name) name.textContent = user.name;
+            if (avatar) avatar.textContent = user.name?.charAt(0).toUpperCase() || 'A';
+            document.documentElement.style.visibility = '';
+          })
+          .catch(() => {
+            localStorage.removeItem('nordica-user');
+            window.location.replace('../login.html');
+          });
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Nordica Nutrition — Administrative Control Panel. Manage products, categories, packs, users, and deliveries.">
+  <title>Admin Dashboard — Nordica Nutrition</title>
+  <link rel="icon" type="image/png" href="../assets/logo.png">
+  <link rel="stylesheet" href="css/admin.css">
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- jsPDF for generating invoices programmatically -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    /* CSS for Print View */
+    @media print {
+      body * { visibility: hidden; background: transparent !important; color: #000 !important; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea {
+        position: absolute;
+        left: 0; top: 0; width: 100%;
+        padding: 20px;
+        background: white !important;
+        color: black !important;
+        font-family: 'Outfit', sans-serif;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mobile Sidebar Toggle -->
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Navigation Menu">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <div class="admin-layout">
+    <!-- ======================================
+         SIDEBAR
+    ======================================= -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <img src="../assets/logo.png" alt="Nordica Nutrition Logo">
+        <div>
+          <span class="sidebar-brand-name">NORDICA</span>
+          <span class="sidebar-brand-sub">Admin panel</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section-label">Navigation</div>
+      
+      <div class="nav-item active" data-target="overview">
+        <span class="nav-item-icon"><i class="fas fa-chart-pie"></i></span>
+        Overview
+      </div>
+      
+      <div class="nav-item" data-target="products">
+        <span class="nav-item-icon"><i class="fas fa-box"></i></span>
+        Products
+        <span class="nav-badge" id="badge-products-count">0</span>
+      </div>
+
+      <div class="nav-item" data-target="categories">
+        <span class="nav-item-icon"><i class="fas fa-tags"></i></span>
+        Categories
+      </div>
+
+      <div class="nav-item" data-target="packs">
+        <span class="nav-item-icon"><i class="fas fa-cubes"></i></span>
+        Packs
+      </div>
+
+      <div class="nav-item" data-target="users">
+        <span class="nav-item-icon"><i class="fas fa-users"></i></span>
+        Users
+      </div>
+
+      <div class="nav-item" data-target="deliveries">
+        <span class="nav-item-icon"><i class="fas fa-truck"></i></span>
+        Deliveries
+        <span class="nav-badge" id="badge-deliveries-pending">0</span>
+      </div>
+
+      <div class="sidebar-section-label">Quick Links</div>
+      <a href="../index.html" class="nav-item">
+        <span class="nav-item-icon"><i class="fas fa-external-link-alt"></i></span>
+        View Website
+      </a>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-admin-info">
+          <div class="admin-avatar">A</div>
+          <div>
+            <div class="admin-name">Admin User</div>
+            <div class="admin-role">Super Administrator</div>
+          </div>
+        </div>
+        <button class="topbar-btn topbar-btn-ghost" id="adminLogoutBtn" style="width:100%; margin-top:14px; justify-content:center;">
+          <i class="fas fa-sign-out-alt"></i> Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- ======================================
+         MAIN CONTENT AREA
+    ======================================= -->
+    <main class="admin-main">
+      
+      <!-- TOPBAR -->
+      <header class="admin-topbar">
+        <div class="topbar-title">
+          <h1 id="pageTitle">Overview</h1>
+          <p id="pageSub">Welcome back, Admin. Here is what is happening today.</p>
+        </div>
+        <div class="topbar-actions" id="topbarActions">
+          <!-- Dynamically populated based on active page -->
+        </div>
+      </header>
+
+      <!-- CONTENT PANELS -->
+      <div class="admin-content">
+        
+        <!-- ==================== TAB: OVERVIEW ==================== -->
+        <section class="tab-panel active" id="panel-overview">
+          <!-- Stats Grid -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon red"><i class="fas fa-money-bill-wave"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Total Revenue</span>
+                <span class="stat-value" id="stat-revenue">0 DT</span>
+                <span class="stat-change up"><i class="fas fa-arrow-up"></i> +12% this month</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green"><i class="fas fa-truck"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Deliveries</span>
+                <span class="stat-value" id="stat-deliveries">0</span>
+                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Pending: <strong id="stat-deliveries-pending">0</strong></span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon blue"><i class="fas fa-box"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Total Products</span>
+                <span class="stat-value" id="stat-products">0</span>
+                <span class="stat-change"><span id="stat-products-active">0</span> Active Items</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon orange"><i class="fas fa-users"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Registered Customers</span>
+                <span class="stat-value" id="stat-users">0</span>
+                <span class="stat-change up"><i class="fas fa-arrow-up"></i> +4 new this week</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="chart-title" style="margin-top: 10px; margin-bottom: 15px;">Quick Actions</div>
+          <div class="quick-actions">
+            <div class="quick-action-card" onclick="openAddProductModal()">
+              <div class="qa-icon" style="color: var(--red);"><i class="fas fa-plus-circle"></i></div>
+              <div class="qa-label">Add Product</div>
+            </div>
+            <div class="quick-action-card" onclick="openAddCategoryModal()">
+              <div class="qa-icon" style="color: var(--blue);"><i class="fas fa-tags"></i></div>
+              <div class="qa-label">Add Category</div>
+            </div>
+            <div class="quick-action-card" onclick="openAddPackModal()">
+              <div class="qa-icon" style="color: var(--green);"><i class="fas fa-cubes"></i></div>
+              <div class="qa-label">Create Pack</div>
+            </div>
+            <div class="quick-action-card" onclick="openAddUserModal()">
+              <div class="qa-icon" style="color: var(--orange);"><i class="fas fa-user-plus"></i></div>
+              <div class="qa-label">Add Customer</div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <!-- Weekly Chart -->
+            <div class="chart-card">
+              <div class="chart-title">Weekly Sales Performance (Mock)</div>
+              <div class="mini-bar-chart" style="margin-top: 20px;">
+                 <div class="mini-bar" style="height: 40%;" title="Mon: 120 DT"></div>
+                <div class="mini-bar" style="height: 65%;" title="Tue: 245 DT"></div>
+                <div class="mini-bar" style="height: 50%;" title="Wed: 180 DT"></div>
+                <div class="mini-bar" style="height: 85%;" title="Thu: 350 DT"></div>
+                <div class="mini-bar" style="height: 30%;" title="Fri: 100 DT"></div>
+                <div class="mini-bar" style="height: 95%;" title="Sat: 420 DT"></div>
+                <div class="mini-bar" style="height: 75%;" title="Sun: 300 DT"></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                <span class="mini-bar-label">M</span>
+                <span class="mini-bar-label">T</span>
+                <span class="mini-bar-label">W</span>
+                <span class="mini-bar-label">T</span>
+                <span class="mini-bar-label">F</span>
+                <span class="mini-bar-label">S</span>
+                <span class="mini-bar-label">S</span>
+              </div>
+            </div>
+
+            <!-- Recent Deliveries -->
+            <div class="chart-card">
+              <div class="chart-title">Recent Delivery Actions</div>
+              <div id="recent-deliveries-list" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+                <!-- Filled dynamically -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB: PRODUCTS ==================== -->
+        <section class="tab-panel" id="panel-products">
+          <div class="table-card">
+            <div class="table-header">
+              <div class="table-title">
+                Products List <span class="table-title-count" id="count-products">0</span>
+              </div>
+              <div class="table-toolbar">
+                <div class="tb-search-wrap">
+                  <i class="fas fa-search tb-search-icon"></i>
+                  <input type="text" class="tb-search" id="search-products" placeholder="Search products...">
+                </div>
+                <select class="tb-select" id="filter-products-cat">
+                  <option value="all">All Categories</option>
+                  <!-- Filled dynamically -->
+                </select>
+                <select class="tb-select" id="filter-products-stock">
+                  <option value="all">All Stock</option>
+                  <option value="instock">In Stock</option>
+                  <option value="outofstock">Out of Stock</option>
+                </select>
+              </div>
+            </div>
+            
+            <div style="overflow-x: auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Product Details</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Badges</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="table-products-body">
+                  <!-- Injected by JS -->
+                </tbody>
+              </table>
+              <div id="products-empty" class="table-empty" style="display:none;">
+                <i class="fas fa-box-open"></i>
+                <p>No products found matching the criteria.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB: CATEGORIES ==================== -->
+        <section class="tab-panel" id="panel-categories">
+          <div class="table-card">
+            <div class="table-header">
+              <div class="table-title">
+                Product Categories <span class="table-title-count" id="count-categories">0</span>
+              </div>
+              <div class="table-toolbar">
+                <div class="tb-search-wrap">
+                  <i class="fas fa-search tb-search-icon"></i>
+                  <input type="text" class="tb-search" id="search-categories" placeholder="Search categories...">
+                </div>
+              </div>
+            </div>
+            <div class="cat-admin-grid" id="cat-grid-body">
+              <!-- Injected by JS -->
+            </div>
+            <div id="categories-empty" class="table-empty" style="display:none;">
+              <i class="fas fa-tags"></i>
+              <p>No categories found.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB: PACKS ==================== -->
+        <section class="tab-panel" id="panel-packs">
+          <div class="table-card">
+            <div class="table-header">
+              <div class="table-title">
+                Promotional Packs <span class="table-title-count" id="count-packs">0</span>
+              </div>
+              <div class="table-toolbar">
+                <div class="tb-search-wrap">
+                  <i class="fas fa-search tb-search-icon"></i>
+                  <input type="text" class="tb-search" id="search-packs" placeholder="Search packs...">
+                </div>
+              </div>
+            </div>
+            
+            <div style="overflow-x: auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Pack Name & Icon</th>
+                    <th>Description</th>
+                    <th>Included Products</th>
+                    <th>Price</th>
+                    <th>Original Price</th>
+                    <th>Savings</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="table-packs-body">
+                  <!-- Injected by JS -->
+                </tbody>
+              </table>
+              <div id="packs-empty" class="table-empty" style="display:none;">
+                <i class="fas fa-cubes"></i>
+                <p>No promotional packs found.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB: USERS ==================== -->
+        <section class="tab-panel" id="panel-users">
+          <div class="table-card">
+            <div class="table-header">
+              <div class="table-title">
+                Registered Customers <span class="table-title-count" id="count-users">0</span>
+              </div>
+              <div class="table-toolbar">
+                <div class="tb-search-wrap">
+                  <i class="fas fa-search tb-search-icon"></i>
+                  <input type="text" class="tb-search" id="search-users" placeholder="Search customers...">
+                </div>
+                <select class="tb-select" id="filter-users-status">
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+            
+            <div style="overflow-x: auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Customer Name</th>
+                    <th>Email Address</th>
+                    <th>Phone Number</th>
+                    <th>Wilaya</th>
+                    <th>Orders Placed</th>
+                    <th>Total Spent</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="table-users-body">
+                  <!-- Injected by JS -->
+                </tbody>
+              </table>
+              <div id="users-empty" class="table-empty" style="display:none;">
+                <i class="fas fa-users-slash"></i>
+                <p>No customers found.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB: DELIVERIES ==================== -->
+        <section class="tab-panel" id="panel-deliveries">
+          <div class="table-card">
+            <div class="table-header">
+              <div class="table-title">
+                Deliveries Management <span class="table-title-count" id="count-deliveries">0</span>
+              </div>
+              <div class="table-toolbar">
+                <div class="tb-search-wrap">
+                  <i class="fas fa-search tb-search-icon"></i>
+                  <input type="text" class="tb-search" id="search-deliveries" placeholder="Search deliveries...">
+                </div>
+                <select class="tb-select" id="filter-deliveries-status">
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="in-transit">In Transit</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <button class="topbar-btn topbar-btn-ghost" onclick="printAllDeliveries()" title="Print summary list">
+                  <i class="fas fa-print"></i> Print Summary
+                </button>
+                <button class="topbar-btn topbar-btn-ghost" onclick="downloadDeliveriesPDF()" title="Download PDF Summary" style="background: rgba(255,255,255,0.05); border-color: rgba(255, 90, 96, 0.3);">
+                  <i class="fas fa-file-pdf" style="color: #FF5A60;"></i> PDF Summary
+                </button>
+              </div>
+            </div>
+            
+            <div style="overflow-x: auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Delivery ID</th>
+                    <th>Customer Details</th>
+                    <th>Wilaya & Address</th>
+                    <th>Items Ordered</th>
+                    <th>Amount Due</th>
+                    <th>Ship Method</th>
+                    <th>Tracking Code</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="table-deliveries-body">
+                  <!-- Injected by JS -->
+                </tbody>
+              </table>
+              <div id="deliveries-empty" class="table-empty" style="display:none;">
+                <i class="fas fa-shipping-fast"></i>
+                <p>No deliveries found matching the filters.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ======================================
+       MODAL: ADD/EDIT PRODUCT
+  ======================================= -->
+  <div class="admin-modal-overlay" id="modal-product">
+    <div class="admin-modal lg">
+      <div class="modal-head">
+        <div class="modal-head-title"><i class="fas fa-box"></i> <span id="product-modal-title">Add New Product</span></div>
+        <button class="modal-x-btn" onclick="closeModal('product')"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="form-product" onsubmit="saveProductForm(event)">
+        <input type="hidden" id="prod-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="prod-name">Product Name *</label>
+            <input type="text" class="form-input" id="prod-name" required placeholder="e.g. Nordica Whey Protein 2kg">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="prod-cat">Category *</label>
+              <select class="form-select" id="prod-cat" required>
+                <!-- Injected dynamically -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="prod-stock">Stock Quantity *</label>
+              <input type="number" class="form-input" id="prod-stock" required min="0" value="10">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="prod-price">Sale Price (DT) *</label>
+              <input type="number" class="form-input" id="prod-price" required min="0" placeholder="e.g. 159">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="prod-old-price">Compare Price (Old Price) (DT)</label>
+              <input type="number" class="form-input" id="prod-old-price" min="0" placeholder="e.g. 180">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="prod-badge">Badge Text</label>
+              <input type="text" class="form-input" id="prod-badge" placeholder="e.g. Best Seller, Sale, New">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="prod-badge-type">Badge Style</label>
+              <select class="form-select" id="prod-badge-type">
+                <option value="">None</option>
+                <option value="hot">Hot (Orange)</option>
+                <option value="new">New (Green)</option>
+                <option value="sale">Sale (Red)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label" for="prod-flavors">Flavors (Comma separated)</label>
+            <input type="text" class="form-input" id="prod-flavors" placeholder="e.g. Chocolate, Vanilla, Strawberry (or N/A)">
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label" for="prod-desc">Description</label>
+            <textarea class="form-textarea" id="prod-desc" placeholder="Enter product sales pitch details..."></textarea>
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label" for="prod-details">Key Features / Details (One per line)</label>
+            <textarea class="form-textarea" id="prod-details" placeholder="e.g. 24g Protein per serving&#10;Easy to mix formula&#10;5.5g BCAAs"></textarea>
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label">Product Image *</label>
+            <div class="img-upload-area" id="prod-img-upload-area">
+              <i class="fas fa-cloud-upload-alt img-upload-icon"></i>
+              <div class="img-upload-label">Drag & drop or <span>browse image</span></div>
+              <input type="file" id="prod-img-file" accept="image/*" onchange="previewUpload(event, 'prod')">
+            </div>
+            <div style="margin-top: 10px; display:flex; align-items:center; gap: 10px;">
+              <span class="form-label">Or Image URL</span>
+              <input type="text" class="form-input" id="prod-img-url" placeholder="https://example.com/image.png" style="flex:1;" onchange="previewUrl(this.value, 'prod')">
+            </div>
+            <div class="img-preview-wrap" style="margin-top: 12px; display: none;" id="prod-preview-container">
+              <img src="" class="img-preview" id="prod-img-preview" alt="Preview">
+              <span style="font-size: 0.75rem; color: var(--gray);" id="prod-img-status"></span>
+            </div>
+          </div>
+
+          <div class="toggle-wrap">
+            <div class="toggle-switch on" id="prod-active-toggle" onclick="toggleSwitch('prod-active-toggle')"></div>
+            <span class="toggle-label">Active & Visible in Catalog</span>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" onclick="closeModal('product')">Cancel</button>
+          <button type="submit" class="btn-save"><i class="fas fa-check"></i> Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================
+       MODAL: ADD/EDIT CATEGORY
+  ======================================= -->
+  <div class="admin-modal-overlay" id="modal-category">
+    <div class="admin-modal">
+      <div class="modal-head">
+        <div class="modal-head-title"><i class="fas fa-tags"></i> <span id="category-modal-title">Add New Category</span></div>
+        <button class="modal-x-btn" onclick="closeModal('category')"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="form-category" onsubmit="saveCategoryForm(event)">
+        <input type="hidden" id="cat-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="cat-name">Category Name *</label>
+            <input type="text" class="form-input" id="cat-name" required placeholder="e.g. Pre-Workout">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cat-desc">Description</label>
+            <textarea class="form-textarea" id="cat-desc" placeholder="Brief explanation of products in this category..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Category Banner/Image *</label>
+            <div class="img-upload-area">
+              <i class="fas fa-cloud-upload-alt img-upload-icon"></i>
+              <div class="img-upload-label">Drag & drop or <span>browse image</span></div>
+              <input type="file" id="cat-img-file" accept="image/*" onchange="previewUpload(event, 'cat')">
+            </div>
+            <div style="margin-top: 10px; display:flex; align-items:center; gap: 10px;">
+              <span class="form-label">Or Image URL</span>
+              <input type="text" class="form-input" id="cat-img-url" placeholder="https://example.com/category.jpg" style="flex:1;" onchange="previewUrl(this.value, 'cat')">
+            </div>
+            <div class="img-preview-wrap" style="margin-top: 12px; display: none;" id="cat-preview-container">
+              <img src="" class="img-preview" id="cat-img-preview" alt="Preview">
+              <span style="font-size: 0.75rem; color: var(--gray);" id="cat-img-status"></span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" onclick="closeModal('category')">Cancel</button>
+          <button type="submit" class="btn-save"><i class="fas fa-check"></i> Save Category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================
+       MODAL: ADD/EDIT PROMOPACK
+  ======================================= -->
+  <div class="admin-modal-overlay" id="modal-pack">
+    <div class="admin-modal lg">
+      <div class="modal-head">
+        <div class="modal-head-title"><i class="fas fa-cubes"></i> <span id="pack-modal-title">Create Pack Bundle</span></div>
+        <button class="modal-x-btn" onclick="closeModal('pack')"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="form-pack" onsubmit="savePackForm(event)">
+        <input type="hidden" id="pack-id">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="pack-name">Pack Name *</label>
+              <input type="text" class="form-input" id="pack-name" required placeholder="e.g. Extreme Performance Pack">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="pack-emoji">Pack Icon (Font Awesome class / Emoji) *</label>
+              <input type="text" class="form-input" id="pack-emoji" required placeholder="e.g. fa-dumbbell, fa-rocket, fa-bolt">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pack-desc">Pack Description *</label>
+            <textarea class="form-textarea" id="pack-desc" required placeholder="Describe who this bundle is for and what benefits it offers..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Include Products from Store</label>
+            <div id="pack-products-checkboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; max-height: 150px; overflow-y: auto; background: var(--black-3); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
+              <!-- Populated dynamically via javascript -->
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Other Custom Items (Optional, one per line)</label>
+            <textarea class="form-textarea" id="pack-custom-items" placeholder="e.g. Free Shaker Bottle&#10;Nutrition Guide PDF" style="height: 60px;"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="pack-price">Bundle Price (DT) *</label>
+              <input type="number" class="form-input" id="pack-price" required min="0" placeholder="e.g. 320" oninput="calculateSavings()">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="pack-orig-price">Original Total Price (DT) *</label>
+              <input type="number" class="form-input" id="pack-orig-price" required min="0" placeholder="e.g. 394" oninput="calculateSavings()">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pack-savings">Calculated Savings (DT)</label>
+            <input type="number" class="form-input" id="pack-savings" readonly style="background: var(--black-3); opacity:0.7;">
+          </div>
+
+          <div class="toggle-wrap">
+            <div class="toggle-switch on" id="pack-active-toggle" onclick="toggleSwitch('pack-active-toggle')"></div>
+            <span class="toggle-label">Active & Visible in Catalog</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" onclick="closeModal('pack')">Cancel</button>
+          <button type="submit" class="btn-save"><i class="fas fa-check"></i> Save Pack</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================
+       MODAL: ADD/EDIT USER
+  ======================================= -->
+  <div class="admin-modal-overlay" id="modal-user">
+    <div class="admin-modal">
+      <div class="modal-head">
+        <div class="modal-head-title"><i class="fas fa-user"></i> <span id="user-modal-title">Add Customer Profile</span></div>
+        <button class="modal-x-btn" onclick="closeModal('user')"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="form-user" onsubmit="saveUserForm(event)">
+        <input type="hidden" id="usr-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="usr-name">Customer Name *</label>
+            <input type="text" class="form-input" id="usr-name" required placeholder="e.g. Sofiane Larbi">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="usr-email">Email Address *</label>
+            <input type="email" class="form-input" id="usr-email" required placeholder="e.g. sofiane@email.com">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="usr-phone">Phone Number *</label>
+            <input type="text" class="form-input" id="usr-phone" required placeholder="e.g. +213 555 12 34 56">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="usr-wilaya">Governorate *</label>
+            <input type="text" class="form-input" id="usr-wilaya" required placeholder="e.g. Jendouba, Tunis, Sousse">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="usr-password">Password (Optional / New)</label>
+            <input type="password" class="form-input" id="usr-password" minlength="6" placeholder="At least 6 characters">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="usr-orders">Orders Placed</label>
+              <input type="number" class="form-input" id="usr-orders" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="usr-spent">Total Spent (DT)</label>
+              <input type="number" class="form-input" id="usr-spent" min="0" value="0">
+            </div>
+          </div>
+
+          <div class="toggle-wrap">
+            <div class="toggle-switch on" id="usr-active-toggle" onclick="toggleSwitch('usr-active-toggle')"></div>
+            <span class="toggle-label">Active Customer Profile</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" onclick="closeModal('user')">Cancel</button>
+          <button type="submit" class="btn-save"><i class="fas fa-check"></i> Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================
+       MODAL: ADD/EDIT DELIVERY
+  ======================================= -->
+  <div class="admin-modal-overlay" id="modal-delivery">
+    <div class="admin-modal lg">
+      <div class="modal-head">
+        <div class="modal-head-title"><i class="fas fa-truck"></i> <span id="delivery-modal-title">Delivery Record</span></div>
+        <button class="modal-x-btn" onclick="closeModal('delivery')"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="form-delivery" onsubmit="saveDeliveryForm(event)">
+        <input type="hidden" id="del-id">
+        <input type="hidden" id="del-order-id">
+        <div class="modal-body">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="del-customer">Customer Name *</label>
+              <input type="text" class="form-input" id="del-customer" required placeholder="e.g. Ahmed Karim">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="del-phone">Phone Number *</label>
+              <input type="text" class="form-input" id="del-phone" required placeholder="e.g. +213 555 12 34 56">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="del-wilaya">Governorate *</label>
+              <input type="text" class="form-input" id="del-wilaya" required placeholder="e.g. Jendouba, Tunis">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="del-address">Full Shipping Address *</label>
+              <input type="text" class="form-input" id="del-address" required placeholder="e.g. Avenue Habib Bourguiba, Jendouba">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="del-products">Products / Items Ordered *</label>
+            <input type="text" class="form-input" id="del-products" required placeholder="e.g. Whey Protein 2kg + Starter Pack">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="del-amount">Order Value (DT) *</label>
+              <input type="number" class="form-input" id="del-amount" required min="0" placeholder="199">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="del-method">Shipping Method *</label>
+              <select class="form-select" id="del-method" required>
+                <option value="home">Home Delivery (Tunisian Courier)</option>
+                <option value="relay">Relay Point Office</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="del-tracking">Courier Tracking Code</label>
+              <input type="text" class="form-input" id="del-tracking" placeholder="e.g. YAL12345678">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="del-status">Delivery Status *</label>
+              <select class="form-select" id="del-status" required>
+                <option value="pending">Pending</option>
+                <option value="in-transit">In Transit</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="del-notes">Courier Notes / Special Instructions</label>
+            <textarea class="form-textarea" id="del-notes" placeholder="e.g. Call before delivery, deliver after 4 PM..."></textarea>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" onclick="closeModal('delivery')">Cancel</button>
+          <button type="submit" class="btn-save"><i class="fas fa-check"></i> Save Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================
+       MODAL: CONFIRM DELETE
+  ======================================= -->
+  <div class="admin-modal-overlay" id="modal-confirm">
+    <div class="admin-modal confirm-modal">
+      <div class="confirm-body">
+        <div class="confirm-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <h3 class="confirm-title">Are you sure?</h3>
+        <p class="confirm-text">This action cannot be undone. All related data will be permanently removed from storage.</p>
+      </div>
+      <div class="modal-footer" style="background: rgba(255,255,255,0.01);">
+        <button class="btn-cancel" onclick="closeModal('confirm')">Cancel</button>
+        <button class="btn-save" id="btn-confirm-delete" style="background: var(--red);"><i class="fas fa-trash-alt"></i> Delete Permanently</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================
+       PRINT AREA TEMPLATE (Hidden by default, used for print layout)
+  ======================================= -->
+  <div id="printArea" style="display: none;">
+    <!-- Filled dynamically when print is clicked -->
+  </div>
+
+  <!-- Toast Notifications Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Main JavaScript Links -->
+  <script src="../js/store.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

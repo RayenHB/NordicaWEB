@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Securely complete your Nordica Nutrition order. Cash on Delivery across all 24 Tunisian Governorates.">
+  <title>Secure Checkout — Nordica Nutrition</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .checkout-wrap {
+      background: var(--black);
+      padding: 120px 0 80px;
+      min-height: 90vh;
+    }
+
+    .checkout-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 40px;
+      margin-top: 30px;
+    }
+
+    .checkout-card {
+      background: var(--black-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: var(--shadow-dark);
+    }
+
+    .checkout-title {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 1.4rem;
+      color: var(--white);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 12px;
+    }
+
+    .checkout-title i {
+      color: var(--red);
+    }
+
+    /* Billing Form */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      font-size: 0.8rem;
+      color: var(--gray-light);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--black-3);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      color: var(--white);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .form-input:focus {
+      border-color: rgba(232, 0, 13, 0.4);
+      background: rgba(255,255,255,0.02);
+    }
+
+    /* CoD Notice */
+    .cod-notice {
+      background: rgba(232, 0, 13, 0.05);
+      border: 1px dashed rgba(232, 0, 13, 0.25);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 15px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .cod-notice-icon {
+      color: var(--red);
+      font-size: 1.2rem;
+      margin-top: 2px;
+    }
+
+    .cod-notice-text {
+      font-size: 0.85rem;
+      color: var(--gray-light);
+      line-height: 1.5;
+    }
+
+    .cod-notice-text strong {
+      color: var(--white);
+    }
+
+    /* Order Summary Cards */
+    .summary-items {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 24px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    .summary-items::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .summary-items::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+    }
+
+    .summary-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--black-3);
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .summary-img {
+      width: 50px;
+      height: 50px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--black-2);
+    }
+
+    .summary-info {
+      flex: 1;
+    }
+
+    .summary-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.3;
+    }
+
+    .summary-qty-price {
+      font-size: 0.75rem;
+      color: var(--gray);
+      margin-top: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .pricing-table {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 15px;
+    }
+
+    .pricing-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--gray-light);
+    }
+
+    .pricing-row.total {
+      font-family: var(--font-body);
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--white);
+      border-top: 1.5px solid rgba(255,255,255,0.08);
+      padding-top: 12px;
+      margin-top: 5px;
+    }
+
+    .btn-place-order {
+      width: 100%;
+      padding: 15px;
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    /* Guest Checkout Warning */
+    .auth-prompt-banner {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.85rem;
+    }
+
+    .auth-prompt-btn {
+      color: var(--red);
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    .auth-prompt-btn:hover {
+      color: var(--red-light);
+    }
+
+    @media (max-width: 900px) {
+      .checkout-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Search Overlay -->
+  <div class="search-overlay" id="searchOverlay">
+    <button class="search-close" id="searchClose"><i class="fas fa-times"></i></button>
+    <div class="search-form">
+      <div class="search-input-wrap">
+        <i class="fas fa-search fa-lg"></i>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search products...">
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="cart-drawer-header">
+      <div class="cart-drawer-title"><i class="fas fa-shopping-bag"></i> Your Cart <span class="cart-drawer-count">0 items</span></div>
+      <button class="cart-close" id="cartClose"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty"><div class="cart-empty-icon"><i class="fas fa-shopping-bag"></i></div><p>Your cart is empty</p></div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-subtotal"><span class="cart-subtotal-label">Subtotal</span><span class="cart-subtotal-price">0 DT</span></div>
+      <p class="cart-shipping-note"><span>Free shipping</span> on orders over 300 DT</p>
+      <button class="btn btn-primary cart-checkout-btn"><i class="fas fa-lock"></i> Checkout Securely</button>
+    </div>
+  </aside>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-logo">
+        <img src="assets/logo.png" alt="Nordica Nutrition Logo">
+        <div class="nav-brand"><span class="nav-brand-name">NORDICA</span><span class="nav-brand-sub">Nutrition Store</span></div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="products.html" class="nav-link">Products</a></li>
+        <li><a href="packs.html" class="nav-link">Packs</a></li>
+        <li><a href="index.html#about" class="nav-link">About</a></li>
+        <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="nav-search-btn" id="searchBtn"><i class="fas fa-search"></i></button>
+        <button class="nav-cart-btn" id="cartBtn"><i class="fas fa-shopping-bag"></i><span class="cart-badge">0</span></button>
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </nav>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html" class="nav-link">Home</a>
+    <a href="products.html" class="nav-link">Products</a>
+    <a href="packs.html" class="nav-link">Packs</a>
+  </div>
+
+  <!-- Main checkout wrap -->
+  <section class="checkout-wrap">
+    <div class="container">
+      
+      <!-- Guest alert if not logged in -->
+      <div class="auth-prompt-banner" id="authBanner">
+        <div>
+          <i class="fas fa-info-circle" style="color:var(--red); margin-right:6px;"></i>
+          Already have an account? Log in to save orders to your profile and track shipment.
+        </div>
+        <a href="login.html" class="auth-prompt-btn">Login Now</a>
+      </div>
+
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="breadcrumb-sep">/</span><a href="products.html">Cart</a><span class="breadcrumb-sep">/</span><span>Checkout</span></div>
+      <h1 class="section-title">SECURE <span class="text-red">CHECKOUT</span></h1>
+
+      <div class="checkout-grid">
+        
+        <!-- Left: Delivery Details Form -->
+        <div class="checkout-card">
+          <div class="checkout-title"><i class="fas fa-truck"></i> Delivery Information</div>
+          
+          <form id="checkoutForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="cust-name">Customer Full Name *</label>
+                <input type="text" class="form-input" id="cust-name" required placeholder="e.g. Kais Ben Ali">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cust-phone">Phone Number *</label>
+                <input type="text" class="form-input" id="cust-phone" required placeholder="e.g. +216 98 123 456">
+              </div>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label" for="cust-wilaya">Governorate *</label>
+              <div style="position: relative;">
+                <select class="form-input" id="cust-wilaya" required style="appearance: none; padding-right: 40px;">
+                  <option value="" disabled selected>Select your Governorate</option>
+                  <option value="Jendouba">Jendouba (Local Depot)</option>
+                  <option value="Tunis">Tunis</option>
+                  <option value="Sousse">Sousse</option>
+                  <option value="Sfax">Sfax</option>
+                  <option value="Bizerte">Bizerte</option>
+                  <option value="Nabeul">Nabeul</option>
+                  <option value="Ariana">Ariana</option>
+                  <option value="Ben Arous">Ben Arous</option>
+                  <option value="Manouba">Manouba</option>
+                  <option value="Zaghouan">Zaghouan</option>
+                  <option value="Béja">Béja</option>
+                  <option value="Le Kef">Le Kef</option>
+                  <option value="Siliana">Siliana</option>
+                  <option value="Kairouan">Kairouan</option>
+                  <option value="Kassérine">Kassérine</option>
+                  <option value="Sidi Bouzid">Sidi Bouzid</option>
+                  <option value="Gabès">Gabès</option>
+                  <option value="Medenine">Medenine</option>
+                  <option value="Tataouine">Tataouine</option>
+                  <option value="Gafsa">Gafsa</option>
+                  <option value="Tozeur">Tozeur</option>
+                  <option value="Kebili">Kebili</option>
+                  <option value="Monastir">Monastir</option>
+                  <option value="Mahdia">Mahdia</option>
+                </select>
+                <i class="fas fa-chevron-down" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--gray);"></i>
+              </div>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label" for="cust-address">Delivery Address *</label>
+              <input type="text" class="form-input" id="cust-address" required placeholder="e.g. Avenue Habib Bourguiba, App 4B">
+            </div>
+
+            <div class="form-group full" style="margin-bottom:0;">
+              <label class="form-label" for="cust-notes">Special Courier Notes</label>
+              <textarea class="form-input" id="cust-notes" rows="3" placeholder="e.g. Call before arrival, deliver after 3 PM..."></textarea>
+            </div>
+
+            <div class="cod-notice">
+              <i class="fas fa-money-bill-wave cod-notice-icon"></i>
+              <div class="cod-notice-text">
+                <strong>Payment Method: Cash on Delivery (COD) Only.</strong><br>
+                You will pay the courier in cash when your supplements are delivered. We currently support secure home deliveries across Tunisia.
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right: Cart Summary Panel -->
+        <div class="checkout-card" style="align-self: start;">
+          <div class="checkout-title"><i class="fas fa-receipt"></i> Order Summary</div>
+          
+          <div class="summary-items" id="summaryItems">
+            <!-- Dynamically populated -->
+          </div>
+
+          <div class="pricing-table">
+            <div class="pricing-row">
+              <span>Subtotal</span>
+              <span id="subtotal-val">0 DT</span>
+            </div>
+            <div class="pricing-row">
+              <span>Shipping Fee</span>
+              <span id="shipping-val">8 DT</span>
+            </div>
+            <div class="pricing-row total">
+              <span>Total Amount</span>
+              <span id="total-val">0 DT</span>
+            </div>
+          </div>
+
+          <button type="submit" form="checkoutForm" class="btn btn-primary btn-place-order">
+            <i class="fas fa-shopping-basket"></i> Place Order (Cash on Delivery)
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:32px 0;border-top:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;gap:16px;">
+        <a href="index.html" class="nav-logo"><img src="assets/logo.png" alt="Logo" style="height:40px;"><div class="nav-brand"><span class="nav-brand-name">NORDICA</span></div></a>
+        <p class="footer-copy">© 2026 <span>Nordica Nutrition</span>. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/store.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[char]));
+    const safeImageUrl = value => {
+      const url = String(value || '');
+      if (/^(https?:\/\/|\/uploads\/|assets\/|data:image\/)/i.test(url)) return url;
+      return 'assets/logo.png';
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      let cart = [];
+      try {
+        const savedCart = JSON.parse(localStorage.getItem('nordica-cart') || '[]');
+        if (Array.isArray(savedCart)) {
+          cart = savedCart.filter(item => item && typeof item.id === 'string' && Number.isFinite(Number(item.qty)) && Number(item.qty) > 0);
+        }
+      } catch (err) {
+        localStorage.removeItem('nordica-cart');
+      }
+      
+      if (cart.length === 0) {
+        alert("Your cart is empty! Redirecting to products page.");
+        window.location.href = 'products.html';
+        return;
+      }
+
+      // Pre-fill user data if logged in
+      let currentUser = NordicaStore.getCurrentUser();
+      if (currentUser) {
+        try {
+          const sessionResponse = await fetch('/api/auth/session');
+          if (sessionResponse.ok) currentUser = await sessionResponse.json();
+          else currentUser = null;
+        } catch (err) {
+          currentUser = null;
+        }
+        if (currentUser) {
+          localStorage.setItem('nordica-user', JSON.stringify(currentUser));
+          document.getElementById('authBanner').style.display = 'none';
+          document.getElementById('cust-name').value = currentUser.name || '';
+          document.getElementById('cust-phone').value = currentUser.phone || '';
+          if (currentUser.wilaya) document.getElementById('cust-wilaya').value = currentUser.wilaya;
+        } else {
+          await NordicaStore.logout();
+        }
+      }
+
+      const [products, packs] = await Promise.all([NordicaStore.get('products'), NordicaStore.get('packs')]);
+      if (products.length + packs.length === 0) {
+        alert('The catalog could not be loaded. Please try checkout again in a moment.');
+        return;
+      }
+      let itemUnavailable = false;
+      cart = cart.map(cartItem => {
+        const item = products.find(product => product.id === cartItem.id && product.active)
+          || packs.find(pack => pack.id === cartItem.id && pack.active);
+        if (!item) {
+          itemUnavailable = true;
+          return cartItem;
+        }
+        return {
+          ...cartItem,
+          name: item.name,
+          price: Number(item.price),
+          img: item.image || 'assets/logo.png',
+          category: item.categoryName || 'Pack',
+          stock: Number.isFinite(Number(item.stock)) ? Number(item.stock) : undefined,
+          qty: Math.min(99, Math.floor(Number(cartItem.qty))),
+        };
+      });
+      if (itemUnavailable) {
+        alert('An item in your cart is no longer available. Please review your cart on the products page.');
+        window.location.href = 'products.html';
+        return;
+      }
+      localStorage.setItem('nordica-cart', JSON.stringify(cart));
+
+      // Calculate prices
+      const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.qty), 0);
+      const shippingCost = subtotal > 300 ? 0 : 8;
+      const grandTotal = subtotal + shippingCost;
+
+      // Render summary items
+      const summaryItemsEl = document.getElementById('summaryItems');
+      summaryItemsEl.innerHTML = cart.map(item => `
+        <div class="summary-item">
+          <img src="${escapeHtml(safeImageUrl(item.img))}" alt="${escapeHtml(item.name)}" class="summary-img" onerror="this.src='assets/logo.png'">
+          <div class="summary-info">
+            <div class="summary-name">${escapeHtml(item.name)}</div>
+            <div class="summary-qty-price">
+              <span>Qty: ${item.qty}</span>
+              <span>${Math.round(item.price * item.qty).toLocaleString()} DT</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('subtotal-val').textContent = Math.round(subtotal).toLocaleString() + ' DT';
+      document.getElementById('shipping-val').textContent = shippingCost === 0 ? 'FREE' : Math.round(shippingCost).toLocaleString() + ' DT';
+      document.getElementById('total-val').textContent = Math.round(grandTotal).toLocaleString() + ' DT';
+
+      // Handle Form Submit
+      const checkoutForm = document.getElementById('checkoutForm');
+      checkoutForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitButton = document.querySelector('.btn-place-order');
+        if (submitButton?.disabled) return;
+        if (submitButton) submitButton.disabled = true;
+
+        const customer = document.getElementById('cust-name').value.trim();
+        const phone = document.getElementById('cust-phone').value.trim();
+        const wilaya = document.getElementById('cust-wilaya').value;
+        const address = document.getElementById('cust-address').value.trim();
+        const notes = document.getElementById('cust-notes').value.trim();
+
+        const payload = {
+          customer: customer,
+          phone: phone,
+          wilaya: wilaya,
+          address: address,
+          notes,
+          items: cart.map(item => ({ id: item.id, qty: Math.floor(Number(item.qty)), flavor: item.flavor || '' }))
+        };
+
+        try {
+          const response = await fetch('/api/deliveries', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'Unable to place your order. Please try again.');
+
+          localStorage.removeItem('nordica-cart');
+          window.clearNordicaCart?.();
+          const checkoutGrid = document.querySelector('.checkout-grid');
+          const successCard = document.createElement('div');
+          successCard.className = 'checkout-card';
+          const heading = document.createElement('h2');
+          heading.className = 'checkout-title';
+          heading.textContent = 'Order received';
+          const message = document.createElement('p');
+          message.textContent = `Order ${result.orderId} is confirmed. The courier will collect ${Math.round(Number(result.amount)).toLocaleString()} DT on delivery.`;
+          const link = document.createElement('a');
+          link.className = 'btn btn-primary';
+          link.href = currentUser ? 'profile.html' : 'products.html';
+          link.textContent = currentUser ? 'View your profile' : 'Continue shopping';
+          successCard.append(heading, message, link);
+          checkoutGrid.replaceChildren(successCard);
+          document.getElementById('authBanner').style.display = 'none';
+        } catch (err) {
+          alert(err.message || 'Error placing order. Please check your connection and try again.');
+          if (submitButton) submitButton.disabled = false;
+        }
+      });
+
+      // Helper showToast (matches main toast system)
+      const showToast = (message) => {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast success`;
+        toast.innerHTML = `
+          <div class="toast-icon">✓</div>
+          <div class="toast-message">
+            <div class="toast-product">${message}</div>
+            Your supplements are on the way.
+          </div>
+        `;
+        container.appendChild(toast);
+        setTimeout(() => {
+          toast.remove();
+        }, 3000);
+      };
+
+    });
+  </script>
+</body>
+</html>

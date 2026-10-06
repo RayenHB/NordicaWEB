@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Nordica Nutrition — Premium sports nutrition supplements. Protein, pre-workout, creatine, BCAA and more. Fuel your performance.">
+  <meta name="keywords" content="Nordica Nutrition, protein, whey, pre-workout, creatine, BCAA, supplements, gym, nutrition">
+  <meta property="og:title" content="Nordica Nutrition — Fuel Your Legend">
+  <meta property="og:description" content="Premium sports nutrition supplements for serious athletes.">
+  <title>Nordica Nutrition — Fuel Your Legend</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- ======================================
+       SEARCH OVERLAY
+  ======================================= -->
+  <div class="search-overlay" id="searchOverlay" role="dialog" aria-label="Search">
+    <button class="search-close" id="searchClose" aria-label="Close search"><i class="fas fa-times"></i></button>
+    <div class="search-form">
+      <div class="search-input-wrap">
+        <i class="fas fa-search fa-lg"></i>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search products..." autocomplete="off">
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================
+       CART OVERLAY + DRAWER
+  ======================================= -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer" aria-label="Shopping Cart">
+    <div class="cart-drawer-header">
+      <div class="cart-drawer-title">
+        <i class="fas fa-shopping-bag"></i>
+        Your Cart
+        <span class="cart-drawer-count">0 items</span>
+      </div>
+      <button class="cart-close" id="cartClose" aria-label="Close cart"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty">
+        <div class="cart-empty-icon"><i class="fas fa-shopping-bag"></i></div>
+        <p>Your cart is empty</p>
+        <a href="products.html" class="btn btn-ghost btn-sm">Browse Products</a>
+      </div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-subtotal">
+        <span class="cart-subtotal-label">Subtotal</span>
+        <span class="cart-subtotal-price">0 DT</span>
+      </div>
+      <p class="cart-shipping-note"><span>Free shipping</span> on orders over 300 DT</p>
+      <button class="btn btn-primary cart-checkout-btn">
+        <i class="fas fa-lock"></i>
+        Checkout Securely
+      </button>
+    </div>
+  </aside>
+
+  <!-- ======================================
+       NAVBAR
+  ======================================= -->
+  <nav class="navbar" id="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-logo" aria-label="Nordica Nutrition Home">
+        <img src="assets/logo.png" alt="Nordica Nutrition Logo">
+        <div class="nav-brand">
+          <span class="nav-brand-name">NORDICA</span>
+          <span class="nav-brand-sub">Nutrition Store</span>
+        </div>
+      </a>
+
+      <ul class="nav-links" role="navigation">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="products.html" class="nav-link">Products</a></li>
+        <li><a href="packs.html" class="nav-link">Packs</a></li>
+        <li><a href="#about" class="nav-link">About</a></li>
+        <li><a href="#contact" class="nav-link">Contact</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="nav-search-btn" id="searchBtn" aria-label="Search">
+          <i class="fas fa-search"></i>
+        </button>
+        <button class="nav-cart-btn" id="cartBtn" aria-label="Cart">
+          <i class="fas fa-shopping-bag"></i>
+          <span class="cart-badge">0</span>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html" class="nav-link">Home</a>
+    <a href="products.html" class="nav-link">Products</a>
+    <a href="packs.html" class="nav-link">Packs</a>
+    <a href="#about" class="nav-link">About</a>
+    <a href="#contact" class="nav-link">Contact</a>
+    <a href="products.html" class="btn btn-primary" style="margin-top: 16px;">Shop Now</a>
+  </div>
+
+  <!-- ======================================
+       HERO SECTION
+  ======================================= -->
+  <section class="hero" id="home">
+    <div class="hero-bg">
+      <div class="hero-bg-gradient"></div>
+      <div class="hero-grid-lines"></div>
+    </div>
+
+    <div class="container hero-inner">
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <div class="hero-eyebrow-line"></div>
+          <span>Premium Sports Nutrition</span>
+        </div>
+        <h1 class="hero-title">
+          FUEL<br>YOUR<br>
+          <span class="hero-title-outline">LEGEND</span>
+        </h1>
+        <p class="hero-desc">
+          Science-backed nutrition crafted for warriors. From elite protein blends to explosive pre-workouts — every product is forged to push your limits.
+        </p>
+        <div class="hero-ctas">
+          <a href="products.html" class="btn btn-primary" id="hero-shop-btn">
+            <i class="fas fa-bolt"></i>
+            Shop Now
+          </a>
+          <a href="packs.html" class="btn btn-outline" id="hero-packs-btn">
+            <i class="fas fa-box-open"></i>
+            View Packs
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat-item">
+            <span class="hero-stat-num" data-count="500" data-suffix="+">0+</span>
+            <span class="hero-stat-label">Happy Athletes</span>
+          </div>
+          <div class="hero-stat-item">
+            <span class="hero-stat-num" data-count="20" data-suffix="+">0+</span>
+            <span class="hero-stat-label">Products</span>
+          </div>
+          <div class="hero-stat-item">
+            <span class="hero-stat-num" data-count="100" data-suffix="%">0%</span>
+            <span class="hero-stat-label">Natural Quality</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hero-logo-wrap">
+          <div class="hero-logo-glow"></div>
+          <div class="hero-logo-ring"></div>
+          <div class="hero-logo-ring"></div>
+          <div class="hero-logo-ring"></div>
+          <img src="assets/logo.png" alt="Nordica Nutrition" class="hero-logo-img">
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-scroll">
+      <div class="scroll-mouse"></div>
+      <span>Scroll</span>
+    </div>
+  </section>
+
+  <!-- ======================================
+       TICKER
+  ======================================= -->
+  <div class="ticker-section">
+    <div class="ticker-track" aria-hidden="true">
+      <!-- Repeated for infinite effect -->
+      <span class="ticker-item"><span class="ticker-dot"></span>Free Shipping Over 300 DT</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>100% Authentic Products</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>New Arrivals Every Month</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>Secure Payments</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>30-Day Return Policy</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>Tunisia-Wide Delivery</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>Free Shipping Over 300 DT</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>100% Authentic Products</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>New Arrivals Every Month</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>Secure Payments</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>30-Day Return Policy</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>Tunisia-Wide Delivery</span>
+    </div>
+  </div>
+
+  <!-- ======================================
+       BENEFITS BAR
+  ======================================= -->
+  <section class="benefits-bar" id="benefits">
+    <div class="container">
+      <div class="benefits-grid">
+        <div class="benefit-item fade-up">
+          <div class="benefit-icon"><i class="fas fa-shipping-fast"></i></div>
+          <div>
+            <div class="benefit-title">Fast Delivery</div>
+            <div class="benefit-desc">Jendouba-based, Nationwide delivery across Tunisia</div>
+          </div>
+        </div>
+        <div class="benefit-item fade-up stagger-1">
+          <div class="benefit-icon"><i class="fas fa-shield-alt"></i></div>
+          <div>
+            <div class="benefit-title">Certified Quality</div>
+            <div class="benefit-desc">100% authentic, lab-tested products</div>
+          </div>
+        </div>
+        <div class="benefit-item fade-up stagger-2">
+          <div class="benefit-icon"><i class="fas fa-undo"></i></div>
+          <div>
+            <div class="benefit-title">Easy Returns</div>
+            <div class="benefit-desc">30-day hassle-free return policy</div>
+          </div>
+        </div>
+        <div class="benefit-item fade-up stagger-3">
+          <div class="benefit-icon"><i class="fas fa-headset"></i></div>
+          <div>
+            <div class="benefit-title">Expert Support</div>
+            <div class="benefit-desc">Nutrition advice from our team</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================
+       FEATURED PRODUCTS
+  ======================================= -->
+  <section class="products-section section-pad" id="products">
+    <div class="container">
+      <div class="text-center fade-up">
+        <div class="section-tag"><i class="fas fa-fire"></i> Best Sellers</div>
+        <h2 class="section-title">TOP <span class="text-red">PRODUCTS</span></h2>
+        <p class="section-subtitle">Our most loved supplements, trusted by hundreds of athletes across Tunisia.</p>
+      </div>
+
+      <div class="products-grid">
+        <!-- Whey Protein -->
+        <div class="product-card fade-up stagger-1" data-category="protein" id="product-whey">
+          <div class="product-card-img-wrap">
+            <img src="assets/products/whey_protein.png" alt="Nordica Whey Protein" class="product-card-img" loading="lazy">
+            <span class="product-badge hot">Best Seller</span>
+            <div class="product-card-actions">
+              <button class="action-btn" title="Quick View"><i class="fas fa-eye"></i></button>
+              <button class="action-btn" title="Wishlist"><i class="fas fa-heart"></i></button>
+            </div>
+          </div>
+          <div class="product-card-body">
+            <div class="product-category">Protein</div>
+            <div class="product-name">Nordica Whey Protein 2kg</div>
+            <div class="product-rating">
+              <div class="stars">
+                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+              </div>
+              <span class="rating-count">(128)</span>
+            </div>
+            <div class="product-price-row">
+              <div class="product-price">
+                <span class="price-current">159</span>
+                <span class="price-old">180 DT</span>
+              </div>
+              <button class="btn-add-cart"
+                data-add-cart
+                data-id="whey-2kg"
+                data-name="Nordica Whey Protein 2kg"
+                data-price="159"
+                data-img="assets/products/whey_protein.png"
+                data-category="Protein"
+                aria-label="Add Whey Protein to cart">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pre-Workout -->
+        <div class="product-card fade-up stagger-2" data-category="pre-workout" id="product-preworkout">
+          <div class="product-card-img-wrap">
+            <img src="assets/products/pre_workout.png" alt="Nordica Pre-Workout" class="product-card-img" loading="lazy">
+            <span class="product-badge new">New</span>
+            <div class="product-card-actions">
+              <button class="action-btn" title="Quick View"><i class="fas fa-eye"></i></button>
+              <button class="action-btn" title="Wishlist"><i class="fas fa-heart"></i></button>
+            </div>
+          </div>
+          <div class="product-card-body">
+            <div class="product-category">Pre-Workout</div>
+            <div class="product-name">Nordica Pre-Workout Extreme</div>
+            <div class="product-rating">
+              <div class="stars">
+                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+              </div>
+              <span class="rating-count">(86)</span>
+            </div>
+            <div class="product-price-row">
+              <div class="product-price">
+                <span class="price-current">95</span>
+                <span style="font-size:0.75rem;color:#888"> DT</span>
+              </div>
+              <button class="btn-add-cart"
+                data-add-cart
+                data-id="preworkout"
+                data-name="Nordica Pre-Workout Extreme"
+                data-price="95"
+                data-img="assets/products/pre_workout.png"
+                data-category="Pre-Workout"
+                aria-label="Add Pre-Workout to cart">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Creatine -->
+        <div class="product-card fade-up stagger-3" data-category="creatine" id="product-creatine">
+          <div class="product-card-img-wrap">
+            <img src="assets/products/creatine.png" alt="Nordica Creatine" class="product-card-img" loading="lazy">
+            <span class="product-badge sale">Sale</span>
+            <div class="product-card-actions">
+              <button class="action-btn" title="Quick View"><i class="fas fa-eye"></i></button>
+              <button class="action-btn" title="Wishlist"><i class="fas fa-heart"></i></button>
+            </div>
+          </div>
+          <div class="product-card-body">
+            <div class="product-category">Creatine</div>
+            <div class="product-name">Nordica Creatine Monohydrate</div>
+            <div class="product-rating">
+              <div class="stars">
+                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+              </div>
+              <span class="rating-count">(54)</span>
+            </div>
+            <div class="product-price-row">
+              <div class="product-price">
+                <span class="price-current">65</span>
+                <span class="price-old">85 DT</span>
+              </div>
+              <button class="btn-add-cart"
+                data-add-cart
+                data-id="creatine"
+                data-name="Nordica Creatine Monohydrate"
+                data-price="65"
+                data-img="assets/products/creatine.png"
+                data-category="Creatine"
+                aria-label="Add Creatine to cart">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BCAA -->
+        <div class="product-card fade-up stagger-4" data-category="amino" id="product-bcaa">
+          <div class="product-card-img-wrap">
+            <img src="assets/products/bcaa.png" alt="Nordica BCAA" class="product-card-img" loading="lazy">
+            <div class="product-card-actions">
+              <button class="action-btn" title="Quick View"><i class="fas fa-eye"></i></button>
+              <button class="action-btn" title="Wishlist"><i class="fas fa-heart"></i></button>
+            </div>
+          </div>
+          <div class="product-card-body">
+            <div class="product-category">Amino Acids</div>
+            <div class="product-name">Nordica BCAA 2:1:1 Formula</div>
+            <div class="product-rating">
+              <div class="stars">
+                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i>
+              </div>
+              <span class="rating-count">(42)</span>
+            </div>
+            <div class="product-price-row">
+              <div class="product-price">
+                <span class="price-current">75</span>
+                <span style="font-size:0.75rem;color:#888"> DT</span>
+              </div>
+              <button class="btn-add-cart"
+                data-add-cart
+                data-id="bcaa"
+                data-name="Nordica BCAA 2:1:1 Formula"
+                data-price="75"
+                data-img="assets/products/bcaa.png"
+                data-category="Amino Acids"
+                aria-label="Add BCAA to cart">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center" style="margin-top: 48px;">
+        <a href="products.html" class="btn btn-outline" id="view-all-products-btn">
+          View All Products <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================
+       PACKS SECTION
+  ======================================= -->
+  <section class="packs-section section-pad" id="packs">
+    <div class="container">
+      <div class="text-center fade-up">
+        <div class="section-tag"><i class="fas fa-box-open"></i> Bundle & Save</div>
+        <h2 class="section-title">OUR <span class="text-red">PACKS</span></h2>
+        <p class="section-subtitle">Smart bundles designed for your goals. Save more when you buy together.</p>
+      </div>
+
+      <div class="packs-grid">
+        <!-- Starter Pack -->
+        <div class="pack-card fade-up stagger-1" id="pack-starter">
+          <div class="pack-icon">🚀</div>
+          <div class="pack-name">STARTER PACK</div>
+          <div class="pack-desc">Perfect for beginners starting their fitness journey. Everything you need to kickstart your gains.</div>
+          <ul class="pack-items">
+            <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>Whey Protein 1kg</li>
+            <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>Creatine Monohydrate</li>
+            <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>Multivitamin (60 caps)</li>
+            <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>Nutrition Guide PDF</li>
+          </ul>
+          <div class="pack-price-row">
+            <div class="pack-price">
+              <span class="pack-price-current">199 DT</span>
+              <span class="pack-price-save">Save 41 DT</span>
+            </div>
+            <button class="btn btn-ghost btn-sm"
+              data-add-cart
+              data-id="pack-starter"
+              data-name="Starter Pack"
+              data-price="199"
+              data-img="assets/logo.png"
+              data-category="Pack"
+              id="add-starter-pack">
+              Add to Cart
+            </button>
+          </div>
+        </div>
+
+        <!-- Performance Pack (Featured) -->
+        <div class="pack-card featured fade-up stagger-2" id="pack-performance">
+          <div class="pack-popular-badge">Most Popular</div>
+          <div class="pack-icon">⚡</div>
+          <div class="pack-name">PERFORMANCE PACK</div>
+          <div class="pack-desc">The complete toolkit for serious athletes. Maximum performance, maximum results.</div>
+          <ul class="pack-items">
+            <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>Whey Protein 2kg</li>
+            <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>Pre-Workout Extreme</li>
+            <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>Creatine Monohydrate</li>
+            <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>BCAA 2:1:1 Formula</li>
+            <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>Shaker Bottle</li>
+          </ul>
+          <div class="pack-price-row">
+            <div class="pack-price">
+              <span class="pack-price-current">320 DT</span>
+              <span class="pack-price-save">Save 74 DT</span>
+            </div>
+            <button class="btn btn-primary btn-sm"
+              data-add-cart
+              data-id="pack-performance"
+              data-name="Performance Pack"
+              data-price="320"
+              data-img="assets/logo.png"
+              data-category="Pack"
+              id="add-performance-pack">
+              Add to Cart
+            </button>
+          </div>
+        </div>
+
+        <!-- Mass Gainer Pack -->
+        <div class="pack-card fade-up stagger-3" id="pack-bulk">
+          <div class="pack-icon">💪</div>
+          <div class="pack-name">BULK PACK</div>
+          <div class="pack-desc">Built for mass. High-calorie nutrition stack designed to help you add serious size and strength.</div>
+          <ul class="pack-items">
+            <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>Mass Gainer 5kg</li>
+            <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>Creatine Monohydrate</li>
+            <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>Multivitamin (90 caps)</li>
+            <li class="pack-item"><span class="pack-check"><i class="fas fa-check"></i></span>ZMA Recovery Formula</li>
+          </ul>
+          <div class="pack-price-row">
+            <div class="pack-price">
+              <span class="pack-price-current">290 DT</span>
+              <span class="pack-price-save">Save 60 DT</span>
+            </div>
+            <button class="btn btn-ghost btn-sm"
+              data-add-cart
+              data-id="pack-bulk"
+              data-name="Bulk Pack"
+              data-price="290"
+              data-img="assets/logo.png"
+              data-category="Pack"
+              id="add-bulk-pack">
+              Add to Cart
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center" style="margin-top: 48px;">
+        <a href="packs.html" class="btn btn-outline" id="view-all-packs-btn">
+          Explore All Packs <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================
+       TESTIMONIALS
+  ======================================= -->
+  <section class="testimonials-section section-pad" id="testimonials">
+    <div class="container">
+      <div class="text-center fade-up" style="margin-bottom: 48px;">
+        <div class="section-tag"><i class="fas fa-star"></i> Reviews</div>
+        <h2 class="section-title">WHAT ATHLETES <span class="text-red">SAY</span></h2>
+      </div>
+    </div>
+    <div class="testimonials-track-wrap">
+      <div class="testimonials-track">
+        <!-- Row 1 -->
+        <div class="testimonial-card">
+          <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+          <p class="testimonial-text">"The Whey Protein tastes incredible and mixes perfectly. I've been using it for 3 months and my recovery has improved dramatically!"</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">AK</div>
+            <div>
+              <div class="testimonial-name">Ahmed Karim</div>
+              <div class="testimonial-label">Powerlifter • Jendouba</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+          <p class="testimonial-text">"The Performance Pack is unbeatable value. Everything I need in one bundle. My gym performance has skyrocketed since starting!"</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">YB</div>
+            <div>
+              <div class="testimonial-name">Yacine Bouzidi</div>
+              <div class="testimonial-label">Bodybuilder • Tunis</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i></div>
+          <p class="testimonial-text">"Super fast delivery and authentic products. The creatine from Nordica is top quality — I can feel the difference in my training sessions."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">SM</div>
+            <div>
+              <div class="testimonial-name">Sofiane Meziane</div>
+              <div class="testimonial-label">CrossFit Athlete • Sousse</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+          <p class="testimonial-text">"I was skeptical at first, but Nordica delivered beyond expectations. The pre-workout is insane — best pump I've ever had!"</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">RH</div>
+            <div>
+              <div class="testimonial-name">Riad Hamzaoui</div>
+              <div class="testimonial-label">Fitness Coach • Bizerte</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+          <p class="testimonial-text">"Ordered the Starter Pack as my first supplement purchase. The results after one month are incredible. Will definitely order again!"</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">NL</div>
+            <div>
+              <div class="testimonial-name">Nassim Larbi</div>
+              <div class="testimonial-label">Gym Enthusiast • Sfax</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+          <p class="testimonial-text">"Customer support is amazing. They helped me choose the right supplements for my goals. The products quality speaks for itself."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">FB</div>
+            <div>
+              <div class="testimonial-name">Farid Belarbi</div>
+              <div class="testimonial-label">Marathon Runner • Nabeul</div>
+            </div>
+          </div>
+        </div>
+        <!-- Duplicated for infinite scroll -->
+        <div class="testimonial-card">
+          <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+          <p class="testimonial-text">"The Whey Protein tastes incredible and mixes perfectly. I've been using it for 3 months and my recovery has improved dramatically!"</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">AK</div>
+            <div>
+              <div class="testimonial-name">Ahmed Karim</div>
+              <div class="testimonial-label">Powerlifter • Jendouba</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+          <p class="testimonial-text">"The Performance Pack is unbeatable value. Everything I need in one bundle. My gym performance has skyrocketed since starting!"</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">YB</div>
+            <div>
+              <div class="testimonial-name">Yacine Bouzidi</div>
+              <div class="testimonial-label">Bodybuilder • Tunis</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i></div>
+          <p class="testimonial-text">"Super fast delivery and authentic products. The creatine from Nordica is top quality — I can feel the difference in my training sessions."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">SM</div>
+            <div>
+              <div class="testimonial-name">Sofiane Meziane</div>
+              <div class="testimonial-label">CrossFit Athlete • Sousse</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+          <p class="testimonial-text">"I was skeptical at first, but Nordica delivered beyond expectations. The pre-workout is insane — best pump I've ever had!"</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">RH</div>
+            <div>
+              <div class="testimonial-name">Riad Hamzaoui</div>
+              <div class="testimonial-label">Fitness Coach • Bizerte</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+          <p class="testimonial-text">"Ordered the Starter Pack as my first supplement purchase. The results after one month are incredible. Will definitely order again!"</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">NL</div>
+            <div>
+              <div class="testimonial-name">Nassim Larbi</div>
+              <div class="testimonial-label">Gym Enthusiast • Sfax</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+          <p class="testimonial-text">"Customer support is amazing. They helped me choose the right supplements for my goals. The products quality speaks for itself."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">FB</div>
+            <div>
+              <div class="testimonial-name">Farid Belarbi</div>
+              <div class="testimonial-label">Marathon Runner • Nabeul</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================
+       CTA BANNER
+  ======================================= -->
+  <section class="cta-section" id="cta">
+    <div class="container cta-inner">
+      <div>
+        <h2 class="cta-title">READY TO LEVEL<br>UP YOUR GAME?</h2>
+        <p class="cta-sub">Join hundreds of Tunisian athletes who trust Nordica Nutrition for their performance and recovery needs.</p>
+      </div>
+      <div class="cta-actions">
+        <a href="products.html" class="btn btn-white" id="cta-shop-btn">
+          <i class="fas fa-bolt"></i> Shop Now
+        </a>
+        <a href="packs.html" class="btn btn-white-outline" id="cta-packs-btn">
+          <i class="fas fa-box-open"></i> View Packs
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================
+       NEWSLETTER
+  ======================================= -->
+  <section class="newsletter-section" id="newsletter">
+    <div class="container">
+      <div class="newsletter-inner fade-up">
+        <div class="section-tag"><i class="fas fa-envelope"></i> Stay Updated</div>
+        <h2 class="section-title">GET <span class="text-red">EXCLUSIVE</span> DEALS</h2>
+        <p class="section-subtitle">Subscribe to our newsletter and be the first to know about new products, discounts, and fitness tips.</p>
+        <form class="newsletter-form" id="newsletterForm">
+          <input type="email" class="newsletter-input" id="newsletterInput" placeholder="Enter your email address" required autocomplete="email">
+          <button type="submit" class="btn btn-primary" id="newsletter-submit-btn">
+            <i class="fas fa-paper-plane"></i> Subscribe
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================
+       FOOTER
+  ======================================= -->
+  <footer class="footer" id="about">
+    <div class="container">
+      <div class="footer-grid">
+        <!-- Brand -->
+        <div>
+          <div class="footer-brand">
+            <img src="assets/logo.png" alt="Nordica Nutrition Logo">
+            <div>
+              <div class="footer-brand-name">NORDICA</div>
+              <div class="footer-brand-sub">Nutrition Store</div>
+            </div>
+          </div>
+          <p class="footer-desc">Premium sports nutrition for serious athletes. We believe in real results through honest, science-backed products.</p>
+          <div class="footer-socials">
+            <a href="#" class="social-btn" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="social-btn" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="social-btn" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+            <a href="#" class="social-btn" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div>
+          <h3 class="footer-col-title">Quick Links</h3>
+          <ul class="footer-links">
+            <li><a href="index.html" class="footer-link">Home</a></li>
+            <li><a href="products.html" class="footer-link">All Products</a></li>
+            <li><a href="packs.html" class="footer-link">Bundle Packs</a></li>
+            <li><a href="#about" class="footer-link">About Us</a></li>
+            <li><a href="#contact" class="footer-link">Contact</a></li>
+          </ul>
+        </div>
+
+        <!-- Categories -->
+        <div>
+          <h3 class="footer-col-title">Categories</h3>
+          <ul class="footer-links">
+            <li><a href="products.html" class="footer-link">Protein</a></li>
+            <li><a href="products.html" class="footer-link">Pre-Workout</a></li>
+            <li><a href="products.html" class="footer-link">Creatine</a></li>
+            <li><a href="products.html" class="footer-link">Amino Acids</a></li>
+            <li><a href="products.html" class="footer-link">Mass Gainers</a></li>
+            <li><a href="products.html" class="footer-link">Vitamins</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact -->
+        <div id="contact">
+          <h3 class="footer-col-title">Contact Us</h3>
+          <div class="footer-contact-item">
+            <span class="footer-contact-icon"><i class="fas fa-map-marker-alt"></i></span>
+            <span>Jendouba, Tunisia — Nationwide Delivery</span>
+          </div>
+          <div class="footer-contact-item">
+            <span class="footer-contact-icon"><i class="fas fa-phone"></i></span>
+            <span>+216 78 456 123</span>
+          </div>
+          <div class="footer-contact-item">
+            <span class="footer-contact-icon"><i class="fas fa-envelope"></i></span>
+            <span>contact@nordicanutrition.tn</span>
+          </div>
+          <div class="footer-contact-item">
+            <span class="footer-contact-icon"><i class="fas fa-clock"></i></span>
+            <span>Sat–Thu: 9am – 8pm</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copy">© 2026 <span>Nordica Nutrition</span>. All rights reserved. Made with ❤️ for Tunisian athletes.</p>
+        <nav class="footer-legal" aria-label="Legal">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+          <a href="#">Return Policy</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/store.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.packs-grid .pack-card').forEach(card => {
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('[data-add-cart]')) return;
+          const id = card.id; // e.g. pack-starter, pack-performance, pack-bulk
+          window.location.href = `packs.html?id=${id}`;
+        });
+      });
+    });
+  </script>
+</body>
+</html>
