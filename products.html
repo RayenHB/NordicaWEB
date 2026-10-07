@@ -483,7 +483,7 @@
   // Products Page JS
   (function() {
     let activeCategory = 'all';
-    let searchQuery = '';
+    let searchQuery = new URLSearchParams(window.location.search).get('search') || '';
     let sortMode = 'default';
     let viewMode = 'grid';
     let categoryFilter = new Set();
@@ -575,8 +575,15 @@
       if (activeCategory !== 'all') products = products.filter(p => p.categoryId === activeCategory);
       // Search
       if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        products = products.filter(p => p.name.toLowerCase().includes(q) || p.categoryName.toLowerCase().includes(q) || (p.description && p.description.toLowerCase().includes(q)));
+        const keywords = searchQuery.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/\s+/).filter(Boolean);
+        products = products.filter(p => {
+          const searchableText = [p.name, p.categoryName, p.description, p.id, p.details, p.flavors]
+            .flatMap(value => Array.isArray(value) ? value : [value])
+            .filter(Boolean)
+            .join(' ')
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          return keywords.every(keyword => searchableText.includes(keyword));
+        });
       }
       // Category filter (sidebar)
       if (categoryFilter.size) products = products.filter(p => categoryFilter.has(p.categoryId));
@@ -810,6 +817,8 @@
     // Check URL param for category
     const urlCat = new URLSearchParams(window.location.search).get('cat');
     if (urlCat) activeCategory = urlCat;
+    const productSearchInput = document.getElementById('productSearch');
+    if (productSearchInput && searchQuery) productSearchInput.value = searchQuery;
 
     async function initPage() {
       await loadCategories();

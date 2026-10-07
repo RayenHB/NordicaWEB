@@ -94,11 +94,96 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchBtn = document.querySelector('.nav-search-btn');
   const searchClose = document.querySelector('.search-close');
   const searchInput = document.querySelector('.search-input');
+  const searchForm = document.querySelector('.search-form');
+  let searchCatalogPromise = null;
+  let searchResults = searchForm?.querySelector('.search-results');
+
+  if (searchForm && !searchResults) {
+    searchResults = document.createElement('div');
+    searchResults.className = 'search-results';
+    searchResults.id = 'searchResults';
+    searchResults.setAttribute('role', 'status');
+    searchForm.appendChild(searchResults);
+  }
+
+  const normalizeSearchText = value => String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase();
+
+  const getSearchCatalog = () => {
+    if (!searchCatalogPromise) {
+      searchCatalogPromise = NordicaStore.get('products').then(products =>
+        Array.isArray(products) ? products.filter(product => product.active !== false) : []
+      );
+    }
+    return searchCatalogPromise;
+  };
+
+  const searchProductText = product => {
+    const values = [product.name, product.categoryName, product.description, product.id];
+    const listFields = [product.details, product.flavors];
+    listFields.forEach(value => {
+      if (Array.isArray(value)) values.push(...value);
+      else if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value);
+          values.push(...(Array.isArray(parsed) ? parsed : [value]));
+        } catch { values.push(value); }
+      }
+    });
+    return normalizeSearchText(values.join(' '));
+  };
+
+  const renderSearchResults = async () => {
+    if (!searchInput || !searchResults) return;
+    const query = searchInput.value.trim();
+    const keywords = normalizeSearchText(query).split(/\s+/).filter(Boolean);
+    if (!keywords.length) {
+      searchResults.innerHTML = '<p class="search-results-hint">Search by product, ingredient, or category.</p>';
+      return;
+    }
+
+    searchResults.innerHTML = '<p class="search-results-hint">Searching the full catalog…</p>';
+    try {
+      const products = await getSearchCatalog();
+      if (searchInput.value.trim() !== query) return;
+      const matches = products.filter(product => {
+        const searchableText = searchProductText(product);
+        return keywords.every(keyword => searchableText.includes(keyword));
+      });
+
+      if (!matches.length) {
+        searchResults.innerHTML = '<p class="search-results-hint">No products match those keywords.</p>';
+        return;
+      }
+
+      const visibleMatches = matches.slice(0, 8);
+      searchResults.innerHTML = visibleMatches.map(product => `
+        <a class="search-result" href="products.html?id=${encodeURIComponent(product.id)}">
+          <img src="${escapeHtml(safeImageUrl(product.image))}" alt="" loading="lazy">
+          <span class="search-result-info">
+            <strong>${escapeHtml(product.name)}</strong>
+            <span>${escapeHtml(product.categoryName || 'Supplement')} · ${Math.round(Number(product.price) || 0).toLocaleString()} DT</span>
+          </span>
+          <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+        </a>
+      `).join('') + `
+        <a class="search-results-all" href="products.html?search=${encodeURIComponent(query)}">
+          View all ${matches.length} matching product${matches.length === 1 ? '' : 's'}
+          <i class="fas fa-arrow-right" aria-hidden="true"></i>
+        </a>
+      `;
+    } catch (err) {
+      searchResults.innerHTML = '<p class="search-results-hint">Search is temporarily unavailable. Please try again.</p>';
+    }
+  };
 
   const openSearch = () => {
     isSearchOpen = true;
     searchOverlay?.classList.add('open');
     document.body.style.overflow = 'hidden';
+    renderSearchResults();
     setTimeout(() => searchInput?.focus(), 100);
   };
 
@@ -110,6 +195,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   searchBtn?.addEventListener('click', openSearch);
   searchClose?.addEventListener('click', closeSearch);
+  searchInput?.addEventListener('input', renderSearchResults);
+  searchInput?.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && searchInput.value.trim()) {
+      e.preventDefault();
+      window.location.href = `products.html?search=${encodeURIComponent(searchInput.value.trim())}`;
+    }
+  });
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
