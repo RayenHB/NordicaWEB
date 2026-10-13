@@ -447,6 +447,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  const openHomepageProduct = productId => {
+    if (!productId) return;
+    window.location.href = `products.html?id=${encodeURIComponent(productId)}`;
+  };
+
+  document.addEventListener('click', e => {
+    const card = e.target.closest('#products .product-card[data-product-id]');
+    if (!card) return;
+
+    if (e.target.closest('[data-home-product-view]')) {
+      openHomepageProduct(card.dataset.productId);
+      return;
+    }
+    if (e.target.closest('button, a')) return;
+    openHomepageProduct(card.dataset.productId);
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || e.target.matches('button, a, input, select, textarea')) return;
+    const card = e.target.closest('#products .product-card[data-product-id]');
+    if (card && e.target === card) openHomepageProduct(card.dataset.productId);
+  });
+
   // =========================================
   // INTERSECTION OBSERVER (Fade Up Animations)
   // =========================================

@@ -176,6 +176,22 @@
     .modal-actions .btn {
       flex: 1;
     }
+
+    .pack-modal {
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    @media (max-width: 640px) {
+      .pack-page-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+      .pack-card { min-width: 0; min-height: 0; }
+      .pack-modal { padding: 30px 20px 20px; }
+      .modal-name { font-size: 1.65rem; letter-spacing: 1px; }
+      .modal-price-value { font-size: 1.85rem; }
+      .modal-pricing-section { gap: 10px; padding: 12px; }
+      .modal-price-label { font-size: 0.68rem; letter-spacing: 0.5px; }
+      .modal-actions { flex-direction: column; }
+    }
   </style>
 </head>
 <body>

@@ -30,6 +30,8 @@
       max-width: 900px;
       max-height: 90vh;
       overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
       display: grid;
       grid-template-columns: 1fr 1fr;
       position: relative;
@@ -242,6 +244,13 @@
     @media (max-width: 640px) {
       .product-modal { grid-template-columns: 1fr; }
       .modal-img-side { border-radius: 20px 20px 0 0; }
+      .modal-img-side { min-height: 210px; padding: 24px; }
+      .modal-img { max-width: 180px; max-height: 190px; object-fit: contain; }
+      .modal-info-side { padding: 24px 20px; gap: 14px; }
+      .modal-name { font-size: 1.55rem; letter-spacing: 1px; overflow-wrap: anywhere; }
+      .modal-price-row { flex-wrap: wrap; gap: 8px; }
+      .modal-price { font-size: 1.8rem; }
+      .modal-ctas { flex-direction: column; }
       .filter-sidebar { 
         grid-template-columns: 1fr; 
         gap: 10px; 
@@ -274,6 +283,11 @@
       .results-count {
         font-size: 0.75rem;
       }
+      .products-grid.list-view .product-card-img-wrap {
+        width: 96px;
+        height: 96px;
+      }
+      .products-grid.list-view .product-card-body { padding: 12px; }
     }
   </style>
 </head>

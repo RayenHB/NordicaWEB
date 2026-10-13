@@ -669,7 +669,24 @@ td:last-child { padding-right: 24px; text-align: right; }
   .sidebar.open { transform: none; }
   .admin-main { margin-left: 0; width: 100%; }
   .sidebar-toggle { display: flex; }
+  .admin-topbar { padding-left: 64px; }
   .form-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .admin-topbar { padding: 12px 16px 12px 64px; align-items: flex-start; flex-wrap: wrap; }
+  .topbar-title p { max-width: 52vw; }
+  .topbar-btn { padding: 8px 10px; font-size: 0.78rem; }
+  .topbar-actions { width: 100%; flex-wrap: wrap; }
+  .admin-content { padding: 16px; }
+  .table-header { padding: 16px; }
+  .table-toolbar { width: 100%; flex-wrap: wrap; }
+  .tb-search-wrap { flex: 1 1 100%; min-width: 0; }
+  .tb-search, .tb-search:focus { width: 100%; }
+  .tb-select { flex: 1 1 120px; min-width: 0; }
+  .cat-admin-grid { padding: 12px 16px 16px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .modal-head, .modal-body { padding-left: 16px; padding-right: 16px; }
+  .modal-footer { padding: 14px 16px; }
 }
 
 /* ---- CATEGORY GRID ---- */
