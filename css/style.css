@@ -931,6 +931,13 @@ ul { list-style: none; }
   gap: 24px;
 }
 
+.home-catalog-state {
+  grid-column: 1 / -1;
+  padding: 36px 20px;
+  color: var(--gray);
+  text-align: center;
+}
+
 .product-card {
   background: var(--black-2);
   border: 1px solid rgba(255,255,255,0.06);

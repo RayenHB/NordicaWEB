@@ -447,6 +447,160 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  const homeProductsGrid = document.getElementById('homeProductsGrid');
+  const homePacksGrid = document.getElementById('homePacksGrid');
+
+  const setHomeCatalogState = (grid, message) => {
+    if (grid) grid.innerHTML = `<p class="home-catalog-state" role="status">${escapeHtml(message)}</p>`;
+  };
+
+  const fetchHomeCatalog = async key => {
+    const response = await fetch(`/api/${key}`, { headers: { Accept: 'application/json' } });
+    if (!response.ok) throw new Error(`Unable to load ${key} (${response.status}).`);
+    const items = await response.json();
+    if (!Array.isArray(items)) throw new Error(`The ${key} response was not a list.`);
+    return items.filter(item => item && item.active !== false);
+  };
+
+  const renderHomeProducts = products => {
+    if (!homeProductsGrid) return;
+    const availableProducts = products
+      .filter(product => product.id && product.name && Number.isFinite(Number(product.price)))
+      .sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)));
+
+    if (!availableProducts.length) {
+      setHomeCatalogState(homeProductsGrid, 'No products are currently available.');
+      return;
+    }
+
+    homeProductsGrid.innerHTML = availableProducts.map((product, index) => {
+      const name = String(product.name);
+      const id = String(product.id);
+      const price = Number(product.price);
+      const oldPrice = Number(product.oldPrice);
+      const rating = Math.max(0, Math.min(5, Number(product.rating) || 0));
+      const ratingSteps = Math.round(rating * 2);
+      const fullStars = Math.floor(ratingSteps / 2);
+      const halfStar = ratingSteps % 2;
+      const emptyStars = 5 - fullStars - halfStar;
+      const reviewCount = Math.max(0, Number(product.reviews) || 0);
+      const badgeType = ['new', 'sale', 'hot'].includes(String(product.badgeType).toLowerCase())
+        ? String(product.badgeType).toLowerCase()
+        : '';
+      const badge = product.badge
+        ? `<span class="product-badge${badgeType ? ` ${badgeType}` : ''}">${escapeHtml(product.badge)}</span>`
+        : '';
+      const category = String(product.categoryName || 'Supplement');
+      const image = safeImageUrl(product.image);
+      const stars = `${'<i class="fas fa-star" aria-hidden="true"></i>'.repeat(fullStars)}${halfStar ? '<i class="fas fa-star-half-alt" aria-hidden="true"></i>' : ''}${'<i class="far fa-star" aria-hidden="true"></i>'.repeat(emptyStars)}`;
+
+      return `
+        <div class="product-card fade-up visible stagger-${(index % 4) + 1}" data-category="${escapeHtml(category.toLowerCase())}" data-product-id="${escapeHtml(id)}" id="home-product-${escapeHtml(id)}" role="group" tabindex="0" aria-label="${escapeHtml(name)}. Press Enter or select to view details.">
+          <div class="product-card-img-wrap">
+            <img src="${escapeHtml(image)}" alt="${escapeHtml(name)}" class="product-card-img" loading="lazy">
+            ${badge}
+            <div class="product-card-actions">
+              <button class="action-btn" type="button" data-home-product-view aria-label="View ${escapeHtml(name)} details" title="Quick View"><i class="fas fa-eye" aria-hidden="true"></i></button>
+              <button class="action-btn" type="button" aria-label="Add ${escapeHtml(name)} to wishlist" title="Wishlist"><i class="fas fa-heart" aria-hidden="true"></i></button>
+            </div>
+          </div>
+          <div class="product-card-body">
+            <div class="product-category">${escapeHtml(category)}</div>
+            <div class="product-name">${escapeHtml(name)}</div>
+            <div class="product-rating" aria-label="${rating.toFixed(1)} out of 5, ${reviewCount} reviews">
+              <div class="stars">${stars}</div>
+              <span class="rating-count">(${reviewCount})</span>
+            </div>
+            <div class="product-price-row">
+              <div class="product-price">
+                <span class="price-current">${Math.round(price).toLocaleString()}</span>
+                ${Number.isFinite(oldPrice) && oldPrice > price
+                  ? `<span class="price-old">${Math.round(oldPrice).toLocaleString()} DT</span>`
+                  : '<span style="font-size:0.75rem;color:#888"> DT</span>'}
+              </div>
+              <button class="btn-add-cart" data-add-cart data-id="${escapeHtml(id)}" data-name="${escapeHtml(name)}" data-price="${price}" data-img="${escapeHtml(image)}" data-category="${escapeHtml(category)}" aria-label="Add ${escapeHtml(name)} to cart">
+                <i class="fas fa-plus" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  const parseHomeList = value => {
+    if (Array.isArray(value)) return value;
+    if (typeof value !== 'string') return [];
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const renderHomePacks = packs => {
+    if (!homePacksGrid) return;
+    const availablePacks = packs
+      .filter(pack => pack.id && pack.name && Number.isFinite(Number(pack.price)))
+      .sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)));
+
+    if (!availablePacks.length) {
+      setHomeCatalogState(homePacksGrid, 'No packs are currently available.');
+      return;
+    }
+
+    homePacksGrid.innerHTML = availablePacks.map(pack => {
+      const id = String(pack.id);
+      const name = String(pack.name);
+      const price = Number(pack.price);
+      const originalPrice = Number(pack.originalPrice);
+      const savings = Number.isFinite(Number(pack.savings))
+        ? Number(pack.savings)
+        : Math.max(0, (Number.isFinite(originalPrice) ? originalPrice : price) - price);
+      const icon = String(pack.emoji || '💪');
+      const iconHtml = icon.startsWith('fa-')
+        ? `<i class="fas ${escapeHtml(icon)}" aria-hidden="true"></i>`
+        : escapeHtml(icon);
+      const productNames = parseHomeList(pack.productNames);
+      const savingsHtml = savings > 0
+        ? `<span class="pack-price-save">Save ${Math.round(savings).toLocaleString()} DT</span>`
+        : '';
+
+      return `
+        <div class="pack-card${pack.featured ? ' featured' : ''}" id="home-${escapeHtml(id)}" data-id="${escapeHtml(id)}" style="cursor:pointer;">
+          ${pack.featured ? '<div class="pack-popular-badge">Most Popular</div>' : ''}
+          <div class="pack-icon">${iconHtml}</div>
+          <div class="pack-name">${escapeHtml(name)}</div>
+          <div class="pack-desc">${escapeHtml(pack.description || '')}</div>
+          <ul class="pack-items">
+            ${productNames.map(item => `<li class="pack-item"><span class="pack-check"><i class="fas fa-check" aria-hidden="true"></i></span>${escapeHtml(item)}</li>`).join('')}
+          </ul>
+          <div class="pack-price-row">
+            <div class="pack-price">
+              <span class="pack-price-current">${Math.round(price).toLocaleString()} DT</span>
+              ${savingsHtml}
+            </div>
+            <button class="btn ${pack.featured ? 'btn-primary' : 'btn-ghost'} btn-sm" data-add-cart data-id="${escapeHtml(id)}" data-name="${escapeHtml(name)}" data-price="${price}" data-img="assets/logo.png" data-category="Pack" aria-label="Add ${escapeHtml(name)} to cart">Add to Cart</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  const loadHomeSection = async (key, grid, render) => {
+    if (!grid) return;
+    try {
+      render(await fetchHomeCatalog(key));
+    } catch (err) {
+      console.error(`Unable to load homepage ${key}:`, err);
+      setHomeCatalogState(grid, `${key === 'products' ? 'Products' : 'Packs'} could not be loaded. Refresh the page to try again.`);
+    }
+  };
+
+  loadHomeSection('products', homeProductsGrid, renderHomeProducts);
+  loadHomeSection('packs', homePacksGrid, renderHomePacks);
+
   const openHomepageProduct = productId => {
     if (!productId) return;
     window.location.href = `products.html?id=${encodeURIComponent(productId)}`;
