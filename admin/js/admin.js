@@ -89,22 +89,12 @@ window.previewUpload = (event, prefix) => {
     img.src = e.target.result;
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 400;
-      const MAX_HEIGHT = 400;
-      let width = img.width;
-      let height = img.height;
-
-      if (width > height) {
-        if (width > MAX_WIDTH) {
-          height *= MAX_WIDTH / width;
-          width = MAX_WIDTH;
-        }
-      } else {
-        if (height > MAX_HEIGHT) {
-          width *= MAX_HEIGHT / height;
-          height = MAX_HEIGHT;
-        }
-      }
+      // Keep enough source detail for product cards and the larger detail view,
+      // while avoiding upscaling small images or storing oversized originals.
+      const MAX_DIMENSION = 1200;
+      const scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height));
+      const width = Math.round(img.width * scale);
+      const height = Math.round(img.height * scale);
 
       canvas.width = width;
       canvas.height = height;
@@ -134,7 +124,7 @@ window.previewUpload = (event, prefix) => {
           if (status) status.textContent = "Upload failed.";
           showToast("Image upload failed.", "warning");
         }
-      }, 'image/jpeg', 0.85);
+      }, 'image/jpeg', 0.92);
     };
   };
 };
