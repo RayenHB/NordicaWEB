@@ -100,8 +100,18 @@ body {
 .product-card:hover {
   box-shadow: 0 16px 36px rgba(31, 42, 52, 0.12);
 }
-.product-card-img-wrap { background: #F0F2F4; }
-.product-card-img { object-fit: contain; padding: 12px; }
+.product-card-img-wrap {
+  aspect-ratio: 1 / 1;
+  background: #F0F2F4;
+}
+.product-card-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  padding: 0;
+}
 .action-btn {
   background: rgba(255, 255, 255, 0.96);
   border-color: rgba(32, 39, 46, 0.12);
