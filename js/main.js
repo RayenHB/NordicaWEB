@@ -7,9 +7,20 @@ document.addEventListener('DOMContentLoaded', () => {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[char]));
   const safeImageUrl = value => {
-    const url = String(value || '');
+    const rawUrl = String(value || '');
+    const url = rawUrl.startsWith('../assets/') ? rawUrl.slice(3) : rawUrl;
     if (/^(https?:\/\/|\/uploads\/|\/assets\/|assets\/|data:image\/)/i.test(url)) return url;
     return 'assets/logo.png';
+  };
+  const normalizeImageList = value => {
+    if (Array.isArray(value)) return value.filter(image => typeof image === 'string' && image.trim()).map(image => image.trim());
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? normalizeImageList(parsed) : [];
+      } catch { return []; }
+    }
+    return [];
   };
   const normalizeFlavors = value => {
     let flavors = value;
@@ -17,9 +28,17 @@ document.addEventListener('DOMContentLoaded', () => {
       try { flavors = JSON.parse(flavors); } catch { flavors = []; }
     }
     if (!Array.isArray(flavors)) return [];
-    return flavors.map(flavor => typeof flavor === 'string'
-      ? { name: flavor.trim(), image: '' }
-      : { name: String(flavor?.name || '').trim(), image: String(flavor?.image || '') })
+    return flavors.map(flavor => {
+      if (typeof flavor === 'string') return { name: flavor.trim(), image: '', images: [] };
+      const images = normalizeImageList(flavor?.images);
+      const hasImagesField = flavor && Object.prototype.hasOwnProperty.call(flavor, 'images');
+      const image = images[0] || (hasImagesField ? '' : String(flavor?.image || ''));
+      return {
+        name: String(flavor?.name || '').trim(),
+        image,
+        images: images.length || hasImagesField ? images : (image ? [image] : [])
+      };
+    })
       .filter(flavor => flavor.name && flavor.name.toLowerCase() !== 'n/a');
   };
 
@@ -454,12 +473,20 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('There is not enough stock for another unit.', 'warning');
         return;
       }
+      const productGallery = normalizeImageList(item.images).map(safeImageUrl);
+      const selectableImages = selectedVariant?.images.length
+        ? selectedVariant.images.map(safeImageUrl)
+        : productGallery;
+      const requestedImage = safeImageUrl(btn.dataset.img);
+      const cartImage = isProduct && selectableImages.includes(requestedImage)
+        ? requestedImage
+        : (selectedVariant?.image && safeImageUrl(selectedVariant.image)) || item.image || btn.dataset.img || 'assets/logo.png';
 
       addToCart({
         id: item.id,
         name: item.name,
         price: Number(item.price),
-        img: (selectedVariant?.image && safeImageUrl(selectedVariant.image)) || item.image || btn.dataset.img || 'assets/logo.png',
+        img: cartImage,
         category: item.categoryName || 'Pack',
         flavor,
         stock: isProduct ? Number(item.stock) : undefined,

@@ -167,6 +167,14 @@ function slugify(value) {
   return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+function normalizeImageGallery(images, primaryImage) {
+  const candidates = [primaryImage, ...(Array.isArray(images) ? images : [])];
+  return [...new Set(candidates
+    .filter(image => typeof image === 'string')
+    .map(image => image.trim())
+    .filter(Boolean))];
+}
+
 // =========================================================
 // API ENDPOINT: FILE UPLOAD
 // =========================================================
@@ -312,15 +320,16 @@ app.get('/api/products', async (req, res) => {
 });
 
 app.post('/api/products', requireAdmin, async (req, res) => {
-  const { id, name, categoryId, categoryName, price, oldPrice, image, badge, badgeType, rating, reviews, stock, flavors, description, details, featured, active } = req.body;
+  const { id, name, categoryId, categoryName, price, oldPrice, image, images, badge, badgeType, rating, reviews, stock, flavors, description, details, featured, active } = req.body;
   if (!id || !name || !categoryId || !categoryName || !image || !Number.isFinite(Number(price)) || Number(price) < 0 || !Number.isInteger(Number(stock)) || Number(stock) < 0) {
     return res.status(400).json({ error: 'Product id, name, category, image, price, and valid stock are required.' });
   }
   try {
+    const productImages = normalizeImageGallery(images, image);
     const result = await db.query(
-      `INSERT INTO products (id, name, categoryId, categoryName, price, oldPrice, image, badge, badgeType, rating, reviews, stock, sku, flavors, description, details, featured, active) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING *`,
-      [id, name, categoryId, categoryName, price, oldPrice, image, badge, badgeType, rating || 5.0, reviews || 0, stock || 0, id, JSON.stringify(flavors || []), description, JSON.stringify(details || []), featured || false, active !== false]
+      `INSERT INTO products (id, name, categoryId, categoryName, price, oldPrice, image, badge, badgeType, rating, reviews, stock, sku, flavors, description, details, featured, active, images) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *`,
+      [id, name, categoryId, categoryName, price, oldPrice, image, badge, badgeType, rating || 5.0, reviews || 0, stock || 0, id, JSON.stringify(flavors || []), description, JSON.stringify(details || []), featured || false, active !== false, JSON.stringify(productImages)]
     );
     res.status(201).json(withoutSku(result.rows[0]));
   } catch (err) {
@@ -331,16 +340,17 @@ app.post('/api/products', requireAdmin, async (req, res) => {
 
 app.put('/api/products/:id', requireAdmin, async (req, res) => {
   const { id } = req.params;
-  const { name, categoryId, categoryName, price, oldPrice, image, badge, badgeType, stock, flavors, description, details, active } = req.body;
+  const { name, categoryId, categoryName, price, oldPrice, image, images, badge, badgeType, stock, flavors, description, details, active } = req.body;
   if (!name || !categoryId || !categoryName || !image || !Number.isFinite(Number(price)) || Number(price) < 0 || !Number.isInteger(Number(stock)) || Number(stock) < 0) {
     return res.status(400).json({ error: 'Product name, category, image, price, and valid stock are required.' });
   }
   try {
+    const productImages = normalizeImageGallery(images, image);
     const result = await db.query(
       `UPDATE products 
-       SET name=$1, categoryId=$2, categoryName=$3, price=$4, oldPrice=$5, image=$6, badge=$7, badgeType=$8, stock=$9, flavors=$10, description=$11, details=$12, active=$13 
-       WHERE id=$14 RETURNING *`,
-      [name, categoryId, categoryName, price, oldPrice, image, badge, badgeType, stock, JSON.stringify(flavors || []), description, JSON.stringify(details || []), active, id]
+       SET name=$1, categoryId=$2, categoryName=$3, price=$4, oldPrice=$5, image=$6, badge=$7, badgeType=$8, stock=$9, flavors=$10, description=$11, details=$12, active=$13, images=$14 
+       WHERE id=$15 RETURNING *`,
+      [name, categoryId, categoryName, price, oldPrice, image, badge, badgeType, stock, JSON.stringify(flavors || []), description, JSON.stringify(details || []), active, JSON.stringify(productImages), id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "Product not found." });
     res.json(withoutSku(result.rows[0]));

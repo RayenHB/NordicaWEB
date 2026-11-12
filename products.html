@@ -44,6 +44,7 @@
       background: var(--black-3);
       border-radius: 20px 0 0 20px;
       display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 14px;
       padding: 40px;
       position: relative;
       overflow: hidden;
@@ -53,7 +54,11 @@
       position: absolute; inset: 0;
       background: radial-gradient(circle at 50% 50%, rgba(232,0,13,0.1) 0%, transparent 70%);
     }
-    .modal-img { width: 100%; max-width: 280px; position: relative; z-index: 1; filter: drop-shadow(0 20px 40px rgba(232,0,13,0.3)); }
+    .modal-img { width: 100%; max-width: 300px; max-height: min(48vh, 360px); object-fit: contain; position: relative; z-index: 1; filter: drop-shadow(0 16px 28px rgba(25,35,45,0.14)); }
+    .modal-image-thumbs { display: flex; justify-content: center; gap: 8px; width: 100%; max-width: 360px; overflow-x: auto; position: relative; z-index: 1; padding: 2px 2px 5px; }
+    .modal-image-thumb { flex: 0 0 56px; width: 56px; height: 56px; padding: 3px; border-radius: 8px; border: 1px solid rgba(32,39,46,0.14); background: #fff; cursor: pointer; }
+    .modal-image-thumb img { width: 100%; height: 100%; border-radius: 5px; object-fit: cover; }
+    .modal-image-thumb.active, .modal-image-thumb:hover { border-color: var(--red); box-shadow: 0 0 0 1px var(--red); }
 
     .modal-info-side { padding: 40px; display: flex; flex-direction: column; gap: 16px; }
 
@@ -248,8 +253,9 @@
     @media (max-width: 640px) {
       .product-modal { grid-template-columns: 1fr; }
       .modal-img-side { border-radius: 20px 20px 0 0; }
-      .modal-img-side { min-height: 210px; padding: 24px; }
-      .modal-img { max-width: 180px; max-height: 190px; object-fit: contain; }
+      .modal-img-side { min-height: 250px; padding: 24px; }
+      .modal-img { max-width: 220px; max-height: 190px; object-fit: contain; }
+      .modal-image-thumbs { justify-content: flex-start; }
       .modal-info-side { padding: 24px 20px; gap: 14px; }
       .modal-name { font-size: 1.55rem; letter-spacing: 1px; overflow-wrap: anywhere; }
       .modal-price-row { flex-wrap: wrap; gap: 8px; }
@@ -359,6 +365,7 @@
       <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
       <div class="modal-img-side">
         <img src="" alt="" class="modal-img" id="modalImg">
+        <div class="modal-image-thumbs" id="modalImageThumbs" aria-label="Product images"></div>
       </div>
       <div class="modal-info-side" id="modalInfoSide">
         <!-- Filled dynamically -->
@@ -510,6 +517,7 @@
     let priceMax = null;
     let inStockOnly = false;
     let selectedFlavor = {};
+    let currentModalProduct = null;
 
     const grid = document.getElementById('productsGrid');
     const noResults = document.getElementById('noResults');
@@ -534,10 +542,43 @@
       catch { return []; }
     };
     const normalizeFlavors = value => parseArray(value)
-      .map(flavor => typeof flavor === 'string'
-        ? { name: flavor.trim(), image: '' }
-        : { name: String(flavor?.name || '').trim(), image: String(flavor?.image || '') })
+      .map(flavor => {
+        if (typeof flavor === 'string') return { name: flavor.trim(), image: '', images: [] };
+        const images = parseArray(flavor?.images).filter(image => typeof image === 'string' && image.trim());
+        const hasImagesField = flavor && Object.prototype.hasOwnProperty.call(flavor, 'images');
+        const image = images[0] || (hasImagesField ? '' : String(flavor?.image || ''));
+        return { name: String(flavor?.name || '').trim(), image, images: images.length || hasImagesField ? images : (image ? [image] : []) };
+      })
       .filter(flavor => flavor.name && flavor.name.toLowerCase() !== 'n/a');
+    const getProductImages = product => [...new Set([
+      product.image,
+      ...parseArray(product.images).filter(image => typeof image === 'string')
+    ].filter(image => image && image.trim()))];
+
+    function renderModalGallery(images, altText) {
+      const galleryImages = [...new Set(images.map(getCleanImgUrl))];
+      const imageEl = document.getElementById('modalImg');
+      const thumbs = document.getElementById('modalImageThumbs');
+      imageEl.src = galleryImages[0] || 'assets/logo.png';
+      imageEl.alt = altText;
+      thumbs.innerHTML = galleryImages.length > 1 ? galleryImages.map((image, index) => `
+        <button type="button" class="modal-image-thumb ${index === 0 ? 'active' : ''}" data-gallery-image="${escapeHtml(image)}" aria-label="View image ${index + 1}" aria-pressed="${index === 0}">
+          <img src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.src='assets/logo.png'">
+        </button>`).join('') : '';
+      thumbs.querySelectorAll('[data-gallery-image]').forEach(button => {
+        button.addEventListener('click', () => {
+          thumbs.querySelectorAll('.modal-image-thumb').forEach(thumb => {
+            thumb.classList.toggle('active', thumb === button);
+            thumb.setAttribute('aria-pressed', String(thumb === button));
+          });
+          imageEl.src = button.dataset.galleryImage;
+          const addButton = document.querySelector('#modalInfoSide [data-add-cart]');
+          if (addButton) addButton.dataset.img = button.dataset.galleryImage;
+        });
+      });
+      const addButton = document.querySelector('#modalInfoSide [data-add-cart]');
+      if (addButton) addButton.dataset.img = galleryImages[0] || 'assets/logo.png';
+    }
 
     // -- Load categories
     async function loadCategories() {
@@ -685,12 +726,12 @@
       // Handle JSON arrays for flavors & details (parsed dynamically or safely checked)
       const flavorsList = normalizeFlavors(p.flavors);
       const detailsList = parseArray(p.details);
+      const productImages = getProductImages(p);
+      currentModalProduct = { id, product: p, flavors: flavorsList, images: productImages };
       selectedFlavor[id] = flavorsList.length === 1 ? flavorsList[0] : null;
       const initialFlavor = selectedFlavor[id];
-      const initialImage = initialFlavor?.image || p.image;
-      const imageEl = document.getElementById('modalImg');
-      imageEl.src = getCleanImgUrl(initialImage);
-      imageEl.alt = initialFlavor ? `${p.name} — ${initialFlavor.name}` : p.name;
+      const initialImages = initialFlavor?.images.length ? initialFlavor.images : productImages;
+      const initialImage = initialImages[0] || p.image;
 
       document.getElementById('modalInfoSide').innerHTML = `
         ${p.badge ? `<span class="modal-badge ${escapeHtml(p.badgeType)}">${escapeHtml(p.badge)}</span>` : ''}
@@ -712,7 +753,7 @@
             <div class="modal-flavor-label">Choose Flavor</div>
             <div class="modal-flavors">
               ${flavorsList.map(variant => {
-                const variantImage = getCleanImgUrl(variant.image || p.image);
+                const variantImage = getCleanImgUrl(variant.image || productImages[0] || p.image);
                 return `<button type="button" class="flavor-chip ${initialFlavor?.name === variant.name ? 'active' : ''}" data-product-id="${escapeHtml(p.id)}" data-flavor="${escapeHtml(variant.name)}" data-flavor-image="${escapeHtml(variantImage)}" aria-pressed="${initialFlavor?.name === variant.name}"><img src="${escapeHtml(variantImage)}" alt="" loading="lazy" onerror="this.src='assets/logo.png'"><span>${escapeHtml(variant.name)}</span></button>`;
               }).join('')}
             </div>
@@ -733,6 +774,8 @@
         </div>
       `;
 
+      renderModalGallery(initialImages.length ? initialImages : [p.image], initialFlavor ? `${p.name} — ${initialFlavor.name}` : p.name);
+
       document.querySelectorAll('.flavor-chip').forEach(chip => {
         chip.addEventListener('click', () => window.selectFlavor(chip, chip.dataset.productId, chip.dataset.flavor));
       });
@@ -748,15 +791,15 @@
       });
       el.classList.add('active');
       el.setAttribute('aria-pressed', 'true');
-      selectedFlavor[id] = { name: flavor, image: el.dataset.flavorImage };
-      const image = document.getElementById('modalImg');
-      image.src = el.dataset.flavorImage;
-      const product = el.closest('.product-modal');
-      image.alt = `${product.querySelector('.modal-name')?.textContent || 'Product'} — ${flavor}`;
+      const variant = currentModalProduct?.flavors.find(option => option.name === flavor);
+      if (!variant) return;
+      selectedFlavor[id] = variant;
+      const images = variant.images.length ? variant.images : currentModalProduct.images;
+      const productName = currentModalProduct.product.name;
+      renderModalGallery(images.length ? images : [currentModalProduct.product.image], `${productName} — ${flavor}`);
       const addButton = document.querySelector('#modalInfoSide [data-add-cart]');
       if (addButton) {
         addButton.dataset.flavor = flavor;
-        addButton.dataset.img = el.dataset.flavorImage;
         addButton.disabled = Number(addButton.dataset.stock) <= 0;
       }
       document.querySelector('.flavor-selection-hint')?.remove();

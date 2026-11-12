@@ -128,15 +128,76 @@ window.previewUpload = async (event, prefix) => {
   }
 };
 
+const syncPrimaryImageChoice = () => {
+  document.querySelectorAll('#prod-image-rows .media-image-entry').forEach(row => {
+    row.classList.toggle('is-primary', !!row.querySelector('input[name="prod-primary-image"]:checked'));
+  });
+};
+
+const ensurePrimaryImageChoice = row => {
+  const radio = row.querySelector('input[name="prod-primary-image"]');
+  const currentPrimary = document.querySelector('#prod-image-rows input[name="prod-primary-image"]:checked')?.closest('.media-image-entry');
+  if (radio && row.dataset.image && !currentPrimary?.dataset.image) radio.checked = true;
+  syncPrimaryImageChoice();
+};
+
+const appendMediaImageRow = (container, image = '', isProductImage = false, isPrimary = false) => {
+  const row = document.createElement('div');
+  row.className = 'media-image-entry';
+  row.dataset.image = image;
+  const shouldBePrimary = isProductImage && (isPrimary || !container.querySelector('input[name="prod-primary-image"]:checked'));
+  row.innerHTML = `
+    ${isProductImage
+      ? `<label class="media-image-role"><input type="radio" name="prod-primary-image" ${shouldBePrimary ? 'checked' : ''}> Main</label>`
+      : '<span class="media-image-role">Photo</span>'}
+    <div class="media-image-control">
+      <label>Upload image</label>
+      <input class="media-image-file" type="file" accept="image/jpeg,image/png,image/webp" onchange="previewMediaUpload(event)">
+    </div>
+    <div class="media-image-control">
+      <label>Or image URL</label>
+      <input class="form-input media-image-url" type="text" value="${escapeHtml(image)}" placeholder="https://... or /uploads/..." onchange="previewMediaUrl(this)">
+    </div>
+    <img class="media-image-preview" src="${image ? escapeHtml(getImgUrl(image)) : ''}" alt="Image preview" style="${image ? '' : 'display:none'}">
+    <button type="button" class="flavor-remove-btn media-image-remove" aria-label="Remove image" title="Remove image" onclick="removeMediaImageRow(this)"><i class="fas fa-trash"></i></button>
+    <span class="media-image-status">${image ? 'Image ready.' : 'Choose a file or enter an image URL.'}</span>`;
+  container.appendChild(row);
+  row.querySelector('input[name="prod-primary-image"]')?.addEventListener('change', syncPrimaryImageChoice);
+  syncPrimaryImageChoice();
+  return row;
+};
+
+window.addProductImageRow = (image = '', isPrimary = false) => {
+  const container = document.getElementById('prod-image-rows');
+  if (container) appendMediaImageRow(container, image, true, isPrimary);
+};
+
+window.addFlavorImageRow = button => {
+  const container = button?.closest('.flavor-admin-row')?.querySelector('.flavor-image-rows');
+  if (container) appendMediaImageRow(container);
+};
+
+window.removeMediaImageRow = button => {
+  const row = button?.closest('.media-image-entry');
+  const wasPrimary = !!row?.querySelector('input[name="prod-primary-image"]:checked');
+  row?.remove();
+  if (wasPrimary) {
+    const replacement = document.querySelector('#prod-image-rows input[name="prod-primary-image"]');
+    if (replacement) replacement.checked = true;
+  }
+  syncPrimaryImageChoice();
+};
+
 window.addFlavorRow = (flavor = {}) => {
   const rows = document.getElementById('prod-flavor-rows');
   if (!rows) return;
   const name = typeof flavor === 'string' ? flavor : flavor?.name || '';
-  const image = typeof flavor === 'string' ? '' : flavor?.image || '';
   if (name.trim().toLowerCase() === 'n/a') return;
+  let images = Array.isArray(flavor?.images) ? flavor.images : parseArray(flavor?.images);
+  if (!Object.prototype.hasOwnProperty.call(flavor || {}, 'images') && flavor?.image) images = [flavor.image];
+  images = images.filter(image => typeof image === 'string' && image.trim()).map(image => image.trim());
   const row = document.createElement('div');
   row.className = 'flavor-admin-row';
-  row.dataset.image = image;
   row.innerHTML = `
     <div class="flavor-admin-row-head">
       <div>
@@ -145,61 +206,55 @@ window.addFlavorRow = (flavor = {}) => {
       </div>
       <button type="button" class="flavor-remove-btn" aria-label="Remove flavor" title="Remove flavor" onclick="this.closest('.flavor-admin-row').remove()"><i class="fas fa-trash"></i></button>
     </div>
-    <div class="flavor-admin-image-fields">
-      <div>
-        <label>Upload flavor photo</label>
-        <input class="flavor-admin-file" type="file" accept="image/jpeg,image/png,image/webp" onchange="previewFlavorUpload(event)">
-      </div>
-      <div>
-        <label>Or paste image URL</label>
-        <input class="form-input flavor-admin-url" type="text" value="${escapeHtml(image)}" placeholder="https://... or /uploads/..." onchange="previewFlavorUrl(this)">
-      </div>
-      <img class="flavor-admin-preview" src="${image ? escapeHtml(getImgUrl(image)) : ''}" alt="Flavor image preview" style="${image ? '' : 'display:none'}">
-      <span class="flavor-admin-status">${image ? 'Flavor image ready.' : 'No separate photo yet; the main product image will be used.'}</span>
-    </div>`;
+    <p class="flavor-admin-hint">Add as many photos as needed. Without flavor photos, the product gallery is used.</p>
+    <div class="flavor-image-rows"></div>
+    <button type="button" class="topbar-btn topbar-btn-ghost flavor-add-btn" onclick="addFlavorImageRow(this)"><i class="fas fa-plus"></i> Add Flavor Image</button>`;
   rows.appendChild(row);
+  const imageContainer = row.querySelector('.flavor-image-rows');
+  images.forEach(image => appendMediaImageRow(imageContainer, image));
 };
 
-window.previewFlavorUpload = async event => {
+window.previewMediaUpload = async event => {
   const file = event.target.files[0];
-  const row = event.target.closest('.flavor-admin-row');
+  const row = event.target.closest('.media-image-entry');
   if (!file || !row) return;
-  const preview = row.querySelector('.flavor-admin-preview');
-  const status = row.querySelector('.flavor-admin-status');
+  const preview = row.querySelector('.media-image-preview');
+  const status = row.querySelector('.media-image-status');
   row.dataset.uploading = 'true';
   status.textContent = 'Compressing & uploading...';
   try {
     row.dataset.image = await uploadCompressedImage(file);
-    row.querySelector('.flavor-admin-url').value = row.dataset.image;
+    row.querySelector('.media-image-url').value = row.dataset.image;
     preview.src = getImgUrl(row.dataset.image);
     preview.style.display = 'block';
-    status.textContent = 'Flavor photo uploaded.';
+    status.textContent = 'Image uploaded.';
+    ensurePrimaryImageChoice(row);
   } catch (error) {
-    console.error('Flavor image upload error:', error);
+    console.error('Gallery image upload error:', error);
     status.textContent = 'Upload failed.';
-    showToast(error.message || 'Flavor image upload failed.', 'warning');
+    showToast(error.message || 'Image upload failed.', 'warning');
   } finally {
     row.dataset.uploading = 'false';
   }
 };
 
-window.previewFlavorUrl = input => {
-  const row = input.closest('.flavor-admin-row');
+window.previewMediaUrl = input => {
+  const row = input.closest('.media-image-entry');
   if (!row) return;
   const image = input.value.trim();
-  const preview = row.querySelector('.flavor-admin-preview');
-  const status = row.querySelector('.flavor-admin-status');
+  const preview = row.querySelector('.media-image-preview');
+  const status = row.querySelector('.media-image-status');
   row.dataset.image = image;
-  const fileInput = row.querySelector('.flavor-admin-file');
-  if (fileInput) fileInput.value = '';
+  row.querySelector('.media-image-file').value = '';
+  if (image) ensurePrimaryImageChoice(row);
   if (image) {
     preview.src = getImgUrl(image);
     preview.style.display = 'block';
-    status.textContent = 'Flavor image URL ready.';
+    status.textContent = 'Image URL ready.';
   } else {
     preview.removeAttribute('src');
     preview.style.display = 'none';
-    status.textContent = 'No separate photo yet; the main product image will be used.';
+    status.textContent = 'Choose a file or enter an image URL.';
   }
 };
 
@@ -481,9 +536,8 @@ window.openAddProductModal = () => {
   const catSelect = document.getElementById('prod-cat');
   if (catSelect && catSelect.options.length > 0) catSelect.selectedIndex = 0;
 
-  document.getElementById('prod-preview-container').style.display = 'none';
-  document.getElementById('prod-img-preview').src = '';
-  document.getElementById('prod-img-status').textContent = '';
+  document.getElementById('prod-image-rows').replaceChildren();
+  window.addProductImageRow();
   document.getElementById('prod-flavor-rows').replaceChildren();
 
   setSwitchValue('prod-active-toggle', true);
@@ -496,7 +550,7 @@ window.openEditProductModal = async (id) => {
   if (!p) return;
 
   currentEditingId = id;
-  uploadedImageBase64 = p.image;
+  uploadedImageBase64 = null;
 
   document.getElementById('product-modal-title').textContent = "Edit Product Details";
   document.getElementById('prod-id').value = p.id;
@@ -512,6 +566,14 @@ window.openEditProductModal = async (id) => {
   const flavorsList = parseArray(p.flavors);
   const detailsList = parseArray(p.details);
 
+  const imageRows = document.getElementById('prod-image-rows');
+  imageRows.replaceChildren();
+  let productImages = parseArray(p.images).filter(image => typeof image === 'string' && image.trim());
+  if (p.image && !productImages.includes(p.image)) productImages.unshift(p.image);
+  if (!productImages.length && p.image) productImages = [p.image];
+  productImages.forEach(image => window.addProductImageRow(image, image === p.image));
+  if (!productImages.length) window.addProductImageRow();
+
   const flavorRows = document.getElementById('prod-flavor-rows');
   flavorRows.replaceChildren();
   flavorsList.forEach(flavor => {
@@ -522,18 +584,6 @@ window.openEditProductModal = async (id) => {
   });
   document.getElementById('prod-desc').value = p.description || '';
   document.getElementById('prod-details').value = detailsList.join('\n');
-
-  // Preview Image
-  const preview = document.getElementById('prod-img-preview');
-  preview.src = getImgUrl(p.image);
-  document.getElementById('prod-preview-container').style.display = 'flex';
-  document.getElementById('prod-img-status').textContent = p.image.startsWith('/uploads/') ? 'Stored on Server' : 'Linked Image';
-  
-  if (p.image.startsWith('http') || p.image.startsWith('/assets/')) {
-    document.getElementById('prod-img-url').value = p.image;
-  } else {
-    document.getElementById('prod-img-url').value = '';
-  }
 
   setSwitchValue('prod-active-toggle', p.active);
   openModal('product');
@@ -552,14 +602,16 @@ window.saveProductForm = async (event) => {
   const badge = (document.getElementById('prod-badge').value || '').trim() || null;
   const badgeType = (document.getElementById('prod-badge-type').value || '').trim() || null;
   const flavorRows = Array.from(document.querySelectorAll('#prod-flavor-rows .flavor-admin-row'));
-  const productUploadArea = document.getElementById('prod-img-upload-area');
-  if (productUploadArea?.dataset.uploading === 'true' || flavorRows.some(row => row.dataset.uploading === 'true')) {
+  const productImageRows = Array.from(document.querySelectorAll('#prod-image-rows .media-image-entry'));
+  const allImageRows = [...productImageRows, ...flavorRows.flatMap(row => Array.from(row.querySelectorAll('.media-image-entry')))];
+  if (allImageRows.some(row => row.dataset.uploading === 'true')) {
     showToast('Wait for image uploads to finish before saving the product.', 'warning');
     return;
   }
   const flavors = flavorRows.map(row => ({
     name: row.querySelector('.flavor-admin-name').value.trim(),
-    image: row.dataset.image || ''
+    images: Array.from(row.querySelectorAll('.flavor-image-rows .media-image-entry'))
+      .map(imageRow => imageRow.dataset.image || '').filter(Boolean)
   })).filter(flavor => flavor.name && flavor.name.toLowerCase() !== 'n/a');
   const flavorNames = flavors.map(flavor => flavor.name.toLowerCase());
   if (new Set(flavorNames).size !== flavorNames.length) {
@@ -569,34 +621,25 @@ window.saveProductForm = async (event) => {
   const description = document.getElementById('prod-desc').value;
   const details = document.getElementById('prod-details').value.split('\n').map(d => d.trim()).filter(Boolean);
   const active = getSwitchValue('prod-active-toggle');
-
-  // For new products, image is required. For edits, we keep existing image if none provided
-  if (!uploadedImageBase64 && !currentEditingId) {
-    showToast("Please upload an image or provide an image URL.", "warning");
+  const galleryImages = productImageRows.map(row => row.dataset.image || '').filter(Boolean);
+  const checkedPrimaryRow = document.querySelector('#prod-image-rows input[name="prod-primary-image"]:checked')?.closest('.media-image-entry');
+  const finalImage = checkedPrimaryRow?.dataset.image || galleryImages[0] || '';
+  if (!finalImage) {
+    showToast('Add at least one product image before saving.', 'warning');
     return;
   }
-
-  // For edits with no new image, fetch the current product and use its image
-  let finalImage = uploadedImageBase64;
-  if (currentEditingId && !uploadedImageBase64) {
-    const products = await NordicaStore.get('products');
-    const currentProduct = products.find(p => p.id === currentEditingId);
-    if (currentProduct) {
-      finalImage = currentProduct.image;
-    }
-  }
-
-  const emptyFlavorImage = flavors.find(flavor => !flavor.image);
-  if (emptyFlavorImage && !finalImage) {
-    showToast(`Add a photo for ${emptyFlavorImage.name}, or choose a main product image to use as a fallback.`, 'warning');
-    return;
-  }
-  const savedFlavors = flavors.map(flavor => ({ ...flavor, image: flavor.image || finalImage }));
+  const productGallery = [...new Set([finalImage, ...galleryImages])];
+  const savedFlavors = flavors.map(flavor => ({
+    name: flavor.name,
+    images: [...new Set(flavor.images)],
+    image: flavor.images[0] || finalImage
+  }));
 
   const payload = {
     name, categoryId, categoryName, stock, price, oldPrice,
     badge, badgeType, flavors: savedFlavors, description, details, active,
-    image: finalImage || ''
+    image: finalImage,
+    images: productGallery
   };
 
   // Debug logging to verify badge is being sent

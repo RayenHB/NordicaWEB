@@ -530,20 +530,12 @@
           </div>
 
           <div class="form-group full">
-            <label class="form-label">Product Image *</label>
-            <div class="img-upload-area" id="prod-img-upload-area">
-              <i class="fas fa-cloud-upload-alt img-upload-icon"></i>
-              <div class="img-upload-label">Drag & drop or <span>browse image</span></div>
-              <input type="file" id="prod-img-file" accept="image/*" onchange="previewUpload(event, 'prod')">
-            </div>
-            <div style="margin-top: 10px; display:flex; align-items:center; gap: 10px;">
-              <span class="form-label">Or Image URL</span>
-              <input type="text" class="form-input" id="prod-img-url" placeholder="https://example.com/image.png" style="flex:1;" onchange="previewUrl(this.value, 'prod')">
-            </div>
-            <div class="img-preview-wrap" style="margin-top: 12px; display: none;" id="prod-preview-container">
-              <img src="" class="img-preview" id="prod-img-preview" alt="Preview">
-              <span style="font-size: 0.75rem; color: var(--gray);" id="prod-img-status"></span>
-            </div>
+            <label class="form-label">Product Images *</label>
+            <p class="flavor-admin-hint">Add multiple product photos and choose which one is used as the main catalog image.</p>
+            <div id="prod-image-rows" class="flavor-admin-rows"></div>
+            <button type="button" class="topbar-btn topbar-btn-ghost flavor-add-btn" onclick="addProductImageRow()">
+              <i class="fas fa-plus"></i> Add Product Image
+            </button>
           </div>
 
           <div class="toggle-wrap">

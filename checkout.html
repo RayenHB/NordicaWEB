@@ -452,9 +452,17 @@
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[char]));
     const safeImageUrl = value => {
-      const url = String(value || '');
+      const rawUrl = String(value || '');
+      const url = rawUrl.startsWith('../assets/') ? rawUrl.slice(3) : rawUrl;
       if (/^(https?:\/\/|\/uploads\/|\/assets\/|assets\/|data:image\/)/i.test(url)) return url;
       return 'assets/logo.png';
+    };
+    const normalizeImageList = value => {
+      let images = value;
+      if (typeof images === 'string') {
+        try { images = JSON.parse(images); } catch { images = []; }
+      }
+      return Array.isArray(images) ? images.filter(image => typeof image === 'string' && image.trim()).map(image => image.trim()) : [];
     };
     const normalizeFlavors = value => {
       let flavors = value;
@@ -462,9 +470,13 @@
         try { flavors = JSON.parse(flavors); } catch { flavors = []; }
       }
       if (!Array.isArray(flavors)) return [];
-      return flavors.map(flavor => typeof flavor === 'string'
-        ? { name: flavor.trim(), image: '' }
-        : { name: String(flavor?.name || '').trim(), image: String(flavor?.image || '') })
+      return flavors.map(flavor => {
+        if (typeof flavor === 'string') return { name: flavor.trim(), image: '', images: [] };
+        let images = normalizeImageList(flavor?.images);
+        const hasImagesField = flavor && Object.prototype.hasOwnProperty.call(flavor, 'images');
+        const image = images[0] || (hasImagesField ? '' : String(flavor?.image || ''));
+        return { name: String(flavor?.name || '').trim(), image, images: images.length || hasImagesField ? images : (image ? [image] : []) };
+      })
         .filter(flavor => flavor.name && flavor.name.toLowerCase() !== 'n/a');
     };
 
@@ -528,12 +540,22 @@
           itemUnavailable = true;
           return cartItem;
         }
+        const productImages = product ? normalizeImageList(item.images).map(safeImageUrl) : [];
+        const selectableImages = variant?.images.length
+          ? variant.images.map(safeImageUrl)
+          : productImages;
+        const requestedImage = safeImageUrl(cartItem.img);
+        const image = product
+          ? (selectableImages.includes(requestedImage)
+            ? requestedImage
+            : safeImageUrl(variant?.image || item.image || 'assets/logo.png'))
+          : item.image || cartItem.img || 'assets/logo.png';
         return {
           ...cartItem,
           name: item.name,
           price: Number(item.price),
           flavor: variant?.name || '',
-          img: variant?.image || cartItem.img || item.image || 'assets/logo.png',
+          img: image,
           category: item.categoryName || 'Pack',
           stock: Number.isFinite(Number(item.stock)) ? Number(item.stock) : undefined,
           qty: Math.min(99, Math.floor(Number(cartItem.qty))),

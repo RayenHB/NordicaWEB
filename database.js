@@ -95,6 +95,7 @@ async function createTables() {
         price NUMERIC(10, 2) NOT NULL,
         oldPrice NUMERIC(10, 2),
         image TEXT NOT NULL,
+        images JSON DEFAULT '[]'::json,
         badge VARCHAR(50),
         badgeType VARCHAR(50),
         rating NUMERIC(2, 1) DEFAULT 5.0,
@@ -126,6 +127,7 @@ async function createTables() {
         createdAt DATE DEFAULT CURRENT_DATE
       );
     `);
+    await pool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSON DEFAULT '[]'::json");
 
     // Users Table (now with password and google_id fields)
     await pool.query(`
