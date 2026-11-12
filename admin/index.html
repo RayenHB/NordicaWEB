@@ -511,8 +511,12 @@
           </div>
 
           <div class="form-group full">
-            <label class="form-label" for="prod-flavors">Flavors (Comma separated)</label>
-            <input type="text" class="form-input" id="prod-flavors" placeholder="e.g. Chocolate, Vanilla, Strawberry (or N/A)">
+            <label class="form-label">Flavor Variants</label>
+            <p class="flavor-admin-hint">Add each flavor separately and upload its photo. A flavor without a photo uses the main product image.</p>
+            <div id="prod-flavor-rows" class="flavor-admin-rows"></div>
+            <button type="button" class="topbar-btn topbar-btn-ghost flavor-add-btn" onclick="addFlavorRow()">
+              <i class="fas fa-plus"></i> Add Flavor
+            </button>
           </div>
 
           <div class="form-group full">

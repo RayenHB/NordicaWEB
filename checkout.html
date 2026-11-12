@@ -453,8 +453,19 @@
     }[char]));
     const safeImageUrl = value => {
       const url = String(value || '');
-      if (/^(https?:\/\/|\/uploads\/|assets\/|data:image\/)/i.test(url)) return url;
+      if (/^(https?:\/\/|\/uploads\/|\/assets\/|assets\/|data:image\/)/i.test(url)) return url;
       return 'assets/logo.png';
+    };
+    const normalizeFlavors = value => {
+      let flavors = value;
+      if (typeof flavors === 'string') {
+        try { flavors = JSON.parse(flavors); } catch { flavors = []; }
+      }
+      if (!Array.isArray(flavors)) return [];
+      return flavors.map(flavor => typeof flavor === 'string'
+        ? { name: flavor.trim(), image: '' }
+        : { name: String(flavor?.name || '').trim(), image: String(flavor?.image || '') })
+        .filter(flavor => flavor.name && flavor.name.toLowerCase() !== 'n/a');
     };
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -508,11 +519,21 @@
           itemUnavailable = true;
           return cartItem;
         }
+        const product = products.some(product => product.id === item.id);
+        const variants = product ? normalizeFlavors(item.flavors) : [];
+        const requestedFlavor = cartItem.flavor || '';
+        const variant = variants.find(option => option.name === requestedFlavor)
+          || (!requestedFlavor && variants.length ? variants[0] : null);
+        if (requestedFlavor && !variant) {
+          itemUnavailable = true;
+          return cartItem;
+        }
         return {
           ...cartItem,
           name: item.name,
           price: Number(item.price),
-          img: item.image || 'assets/logo.png',
+          flavor: variant?.name || '',
+          img: variant?.image || cartItem.img || item.image || 'assets/logo.png',
           category: item.categoryName || 'Pack',
           stock: Number.isFinite(Number(item.stock)) ? Number(item.stock) : undefined,
           qty: Math.min(99, Math.floor(Number(cartItem.qty))),
@@ -537,6 +558,7 @@
           <img src="${escapeHtml(safeImageUrl(item.img))}" alt="${escapeHtml(item.name)}" class="summary-img" onerror="this.src='assets/logo.png'">
           <div class="summary-info">
             <div class="summary-name">${escapeHtml(item.name)}</div>
+            ${item.flavor ? `<div class="summary-flavor">Flavor: ${escapeHtml(item.flavor)}</div>` : ''}
             <div class="summary-qty-price">
               <span>Qty: ${item.qty}</span>
               <span>${Math.round(item.price * item.qty).toLocaleString()} DT</span>

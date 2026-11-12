@@ -89,10 +89,14 @@
     .modal-flavor-label { font-size: 0.8rem; color: var(--gray); font-weight: 600; margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; }
     .modal-flavors { display: flex; flex-wrap: wrap; gap: 8px; }
     .flavor-chip {
-      padding: 6px 14px; border-radius: 6px;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 10px; border-radius: 8px;
       background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
       font: inherit; font-size: 0.8rem; cursor: pointer; transition: var(--transition); color: var(--gray-light);
     }
+    .flavor-chip img { width: 34px; height: 34px; border-radius: 5px; object-fit: cover; background: var(--black-3); }
+    .flavor-chip:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+    .flavor-selection-hint { color: var(--gray); font-size: 0.78rem; margin-top: 8px; }
     .flavor-chip.active, .flavor-chip:hover { background: rgba(232,0,13,0.12); border-color: rgba(232,0,13,0.4); color: var(--red); }
 
     .modal-stock { font-size: 0.8rem; color: #00C851; display: flex; align-items: center; gap: 6px; }
@@ -515,7 +519,7 @@
     // Helper to resolve image paths (removes relative '../' prefix if present for root level pages)
     const getCleanImgUrl = (path) => {
       if (!path) return 'assets/logo.png';
-      if (path.startsWith('data:image/') || path.startsWith('http://') || path.startsWith('https://') || path.startsWith('/uploads/')) return path;
+      if (path.startsWith('data:image/') || path.startsWith('http://') || path.startsWith('https://') || path.startsWith('/uploads/') || path.startsWith('/assets/')) return path;
       if (path.startsWith('../assets/')) return path.substring(3);
       if (path.startsWith('assets/')) return path;
       return 'assets/logo.png';
@@ -529,6 +533,11 @@
       try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; }
       catch { return []; }
     };
+    const normalizeFlavors = value => parseArray(value)
+      .map(flavor => typeof flavor === 'string'
+        ? { name: flavor.trim(), image: '' }
+        : { name: String(flavor?.name || '').trim(), image: String(flavor?.image || '') })
+      .filter(flavor => flavor.name && flavor.name.toLowerCase() !== 'n/a');
 
     // -- Load categories
     async function loadCategories() {
@@ -592,7 +601,7 @@
       if (searchQuery) {
         const keywords = searchQuery.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/\s+/).filter(Boolean);
         products = products.filter(p => {
-          const searchableText = [p.name, p.categoryName, p.description, p.id, p.details, p.flavors]
+          const searchableText = [p.name, p.categoryName, p.description, p.id, p.details, normalizeFlavors(p.flavors).map(flavor => flavor.name)]
             .flatMap(value => Array.isArray(value) ? value : [value])
             .filter(Boolean)
             .join(' ')
@@ -671,15 +680,17 @@
       const p = products.find(x => x.id === id);
       if (!p || !p.active) return;
 
-      document.getElementById('modalImg').src = getCleanImgUrl(p.image);
-      document.getElementById('modalImg').alt = p.name;
-
       const savings = p.oldPrice ? p.oldPrice - p.price : 0;
 
       // Handle JSON arrays for flavors & details (parsed dynamically or safely checked)
-      const flavorsList = parseArray(p.flavors);
+      const flavorsList = normalizeFlavors(p.flavors);
       const detailsList = parseArray(p.details);
-      selectedFlavor[id] = flavorsList[0] && flavorsList[0] !== 'N/A' ? flavorsList[0] : '';
+      selectedFlavor[id] = flavorsList.length === 1 ? flavorsList[0] : null;
+      const initialFlavor = selectedFlavor[id];
+      const initialImage = initialFlavor?.image || p.image;
+      const imageEl = document.getElementById('modalImg');
+      imageEl.src = getCleanImgUrl(initialImage);
+      imageEl.alt = initialFlavor ? `${p.name} — ${initialFlavor.name}` : p.name;
 
       document.getElementById('modalInfoSide').innerHTML = `
         ${p.badge ? `<span class="modal-badge ${escapeHtml(p.badgeType)}">${escapeHtml(p.badge)}</span>` : ''}
@@ -696,20 +707,24 @@
         <div class="modal-details">
           ${detailsList.map(d => `<div class="modal-detail-item"><i class="fas fa-check-circle"></i> ${escapeHtml(d)}</div>`).join('')}
         </div>
-        ${flavorsList.length > 0 && flavorsList[0] !== 'N/A' ? `
+        ${flavorsList.length > 0 ? `
           <div>
             <div class="modal-flavor-label">Choose Flavor</div>
             <div class="modal-flavors">
-              ${flavorsList.map((f,i) => `<button type="button" class="flavor-chip ${i===0?'active':''}" data-product-id="${escapeHtml(p.id)}" data-flavor="${escapeHtml(f)}">${escapeHtml(f)}</button>`).join('')}
+              ${flavorsList.map(variant => {
+                const variantImage = getCleanImgUrl(variant.image || p.image);
+                return `<button type="button" class="flavor-chip ${initialFlavor?.name === variant.name ? 'active' : ''}" data-product-id="${escapeHtml(p.id)}" data-flavor="${escapeHtml(variant.name)}" data-flavor-image="${escapeHtml(variantImage)}" aria-pressed="${initialFlavor?.name === variant.name}"><img src="${escapeHtml(variantImage)}" alt="" loading="lazy" onerror="this.src='assets/logo.png'"><span>${escapeHtml(variant.name)}</span></button>`;
+              }).join('')}
             </div>
+            ${flavorsList.length > 1 && !initialFlavor ? '<p class="flavor-selection-hint">Select a flavor to continue.</p>' : ''}
           </div>
         ` : ''}
         <div class="modal-stock"><i class="fas fa-circle"></i> ${p.stock > 0 ? `${p.stock} units in stock` : 'Out of stock'}</div>
         <div class="modal-ctas">
-          <button class="btn btn-primary" ${Number(p.stock) <= 0 ? 'disabled' : ''}
+          <button class="btn btn-primary" ${Number(p.stock) <= 0 || (flavorsList.length > 1 && !initialFlavor) ? 'disabled' : ''}
             data-add-cart data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name)}"
-            data-price="${Number(p.price)}" data-img="${escapeHtml(getCleanImgUrl(p.image))}" data-category="${escapeHtml(p.categoryName)}"
-            data-flavor="${escapeHtml(selectedFlavor[id] || '')}">
+            data-price="${Number(p.price)}" data-img="${escapeHtml(getCleanImgUrl(initialImage))}" data-category="${escapeHtml(p.categoryName)}"
+            data-flavor="${escapeHtml(initialFlavor?.name || '')}" data-stock="${Number(p.stock)}">
             <i class="fas fa-shopping-bag"></i> ${p.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
           </button>
           <button class="btn btn-outline" onclick="window.closeProductModal()">
@@ -727,11 +742,24 @@
     };
 
     window.selectFlavor = function(el, id, flavor) {
-      el.closest('.modal-flavors').querySelectorAll('.flavor-chip').forEach(c => c.classList.remove('active'));
+      el.closest('.modal-flavors').querySelectorAll('.flavor-chip').forEach(chip => {
+        chip.classList.remove('active');
+        chip.setAttribute('aria-pressed', 'false');
+      });
       el.classList.add('active');
-      selectedFlavor[id] = flavor;
+      el.setAttribute('aria-pressed', 'true');
+      selectedFlavor[id] = { name: flavor, image: el.dataset.flavorImage };
+      const image = document.getElementById('modalImg');
+      image.src = el.dataset.flavorImage;
+      const product = el.closest('.product-modal');
+      image.alt = `${product.querySelector('.modal-name')?.textContent || 'Product'} — ${flavor}`;
       const addButton = document.querySelector('#modalInfoSide [data-add-cart]');
-      if (addButton) addButton.dataset.flavor = flavor;
+      if (addButton) {
+        addButton.dataset.flavor = flavor;
+        addButton.dataset.img = el.dataset.flavorImage;
+        addButton.disabled = Number(addButton.dataset.stock) <= 0;
+      }
+      document.querySelector('.flavor-selection-hint')?.remove();
     };
 
     window.closeProductModal = () => {

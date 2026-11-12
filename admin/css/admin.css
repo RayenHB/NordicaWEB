@@ -751,3 +751,63 @@ select option {
   background-color: #1a1a1a !important;
   color: #ffffff !important;
 }
+
+.flavor-admin-hint {
+  color: var(--gray);
+  font-size: 0.78rem;
+  margin: -4px 0 12px;
+}
+.flavor-admin-rows { display: grid; gap: 12px; }
+.flavor-admin-row {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  background: var(--black-2);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+}
+.flavor-admin-row-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+.flavor-admin-row label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--gray-light);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.flavor-admin-image-fields {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(180px, 1.2fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.flavor-admin-file { width: 100%; color: var(--gray); font-size: 0.72rem; }
+.flavor-admin-preview {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  background: var(--black-3);
+  border-radius: 7px;
+}
+.flavor-admin-status { color: var(--gray); font-size: 0.68rem; grid-column: 1 / -1; }
+.flavor-remove-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 7px;
+  color: var(--gray-light);
+  background: rgba(255,255,255,0.04);
+  cursor: pointer;
+}
+.flavor-remove-btn:hover { color: #fff; background: var(--red); border-color: var(--red); }
+.flavor-add-btn { margin-top: 10px; }
+
+@media (max-width: 640px) {
+  .flavor-admin-image-fields { grid-template-columns: 1fr; }
+  .flavor-admin-preview { width: 72px; height: 72px; }
+  .flavor-admin-status { grid-column: auto; }
+}

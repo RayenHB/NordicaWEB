@@ -8,8 +8,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }[char]));
   const safeImageUrl = value => {
     const url = String(value || '');
-    if (/^(https?:\/\/|\/uploads\/|assets\/|data:image\/)/i.test(url)) return url;
+    if (/^(https?:\/\/|\/uploads\/|\/assets\/|assets\/|data:image\/)/i.test(url)) return url;
     return 'assets/logo.png';
+  };
+  const normalizeFlavors = value => {
+    let flavors = value;
+    if (typeof flavors === 'string') {
+      try { flavors = JSON.parse(flavors); } catch { flavors = []; }
+    }
+    if (!Array.isArray(flavors)) return [];
+    return flavors.map(flavor => typeof flavor === 'string'
+      ? { name: flavor.trim(), image: '' }
+      : { name: String(flavor?.name || '').trim(), image: String(flavor?.image || '') })
+      .filter(flavor => flavor.name && flavor.name.toLowerCase() !== 'n/a');
   };
 
 
@@ -122,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const searchProductText = product => {
     const values = [product.name, product.categoryName, product.description, product.id];
-    const listFields = [product.details, product.flavors];
+    const listFields = [product.details];
     listFields.forEach(value => {
       if (Array.isArray(value)) values.push(...value);
       else if (typeof value === 'string') {
@@ -132,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch { values.push(value); }
       }
     });
+    values.push(...normalizeFlavors(product.flavors).map(flavor => flavor.name));
     return normalizeSearchText(values.join(' '));
   };
 
@@ -281,7 +293,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const updateQty = (id, flavor, delta) => {
     const item = cart.find(i => i.id === id && (i.flavor || '') === flavor);
     if (item) {
-      const cap = Number.isFinite(Number(item.stock)) && Number(item.stock) > 0 ? Math.min(99, Number(item.stock)) : 99;
+      const otherFlavorQty = cart
+        .filter(entry => entry.id === id && (entry.flavor || '') !== flavor)
+        .reduce((sum, entry) => sum + entry.qty, 0);
+      const stockLimit = Number.isFinite(Number(item.stock)) ? Number(item.stock) : 99;
+      const cap = Math.max(1, Math.min(99, stockLimit - otherFlavorQty));
       item.qty = Math.min(cap, Math.max(1, item.qty + delta));
       saveCart();
       updateCartBadge();
@@ -414,18 +430,27 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const isProduct = products.some(p => p.id === id);
-      const flavor = btn.dataset.flavor || '';
-      let flavors = item.flavors || [];
-      if (typeof flavors === 'string') {
-        try { flavors = JSON.parse(flavors); } catch { flavors = []; }
+      const flavors = isProduct ? normalizeFlavors(item.flavors) : [];
+      let flavor = btn.dataset.flavor || '';
+      if (isProduct && flavors.length > 1 && !flavor) {
+        if (typeof window.openModal === 'function') {
+          window.openModal(id);
+          showToast('Choose a flavor before adding this product.', 'warning');
+        } else {
+          window.location.href = `products.html?id=${encodeURIComponent(id)}`;
+        }
+        return;
       }
-      if (!Array.isArray(flavors)) flavors = [];
-      if (isProduct && flavor && !flavors.includes(flavor)) {
+      if (isProduct && flavors.length === 1 && !flavor) flavor = flavors[0].name;
+      const selectedVariant = flavors.find(variant => variant.name === flavor);
+      if (isProduct && flavor && !selectedVariant) {
         showToast('That flavor is no longer available.', 'warning');
         return;
       }
-      const existing = cart.find(entry => entry.id === id && (entry.flavor || '') === flavor);
-      if (isProduct && Number(item.stock) < (existing?.qty || 0) + 1) {
+      const totalProductQty = isProduct
+        ? cart.filter(entry => entry.id === id).reduce((sum, entry) => sum + entry.qty, 0)
+        : 0;
+      if (isProduct && Number(item.stock) < totalProductQty + 1) {
         showToast('There is not enough stock for another unit.', 'warning');
         return;
       }
@@ -434,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
         id: item.id,
         name: item.name,
         price: Number(item.price),
-        img: item.image || btn.dataset.img || 'assets/logo.png',
+        img: (selectedVariant?.image && safeImageUrl(selectedVariant.image)) || item.image || btn.dataset.img || 'assets/logo.png',
         category: item.categoryName || 'Pack',
         flavor,
         stock: isProduct ? Number(item.stock) : undefined,

@@ -575,7 +575,15 @@ app.post('/api/deliveries', optionalAuth, async (req, res) => {
             const product = productResult.rows[0];
             if (Number(product.stock) < item.qty) throw Object.assign(new Error(`${product.name} does not have enough stock.`), { statusCode: 400 });
             const availableFlavors = typeof product.flavors === 'string' ? JSON.parse(product.flavors) : (product.flavors || []);
-            if (item.flavor && !availableFlavors.includes(item.flavor)) throw Object.assign(new Error(`${product.name} does not offer that flavor.`), { statusCode: 400 });
+            const availableFlavorNames = (Array.isArray(availableFlavors) ? availableFlavors : [])
+              .map(flavor => typeof flavor === 'string' ? flavor.trim() : String(flavor?.name || '').trim())
+              .filter(flavor => flavor && flavor.toLowerCase() !== 'n/a');
+            if (availableFlavorNames.length && !item.flavor) {
+              throw Object.assign(new Error(`Choose a flavor for ${product.name}.`), { statusCode: 400 });
+            }
+            if (item.flavor && !availableFlavorNames.includes(item.flavor)) {
+              throw Object.assign(new Error(`${product.name} does not offer that flavor.`), { statusCode: 400 });
+            }
             await tx.query('UPDATE products SET stock = stock - $1 WHERE id = $2', [item.qty, item.id]);
             subtotal += Number(product.price) * item.qty;
             descriptions.push(`${product.name}${item.flavor ? ` - ${item.flavor}` : ''} (x${item.qty})`);

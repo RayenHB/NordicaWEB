@@ -207,6 +207,7 @@ body {
   border-color: rgba(32, 39, 46, 0.1);
 }
 .summary-img { background: #FFFFFF; }
+.summary-flavor { color: var(--red); font-size: 0.75rem; font-weight: 600; margin-top: 3px; }
 .auth-tab { color: #68737D; }
 .auth-tab.active { color: #20272E; }
 .google-popup-card, .google-modal { color: #20272E; }

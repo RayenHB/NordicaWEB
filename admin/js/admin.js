@@ -70,63 +70,137 @@ const getImgUrl = (path) => {
   return '../' + path; // Prepend admin relative parent folder
 };
 
-// Canvas Image Compression + server upload
-window.previewUpload = (event, prefix) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const preview = document.getElementById(`${prefix}-img-preview`);
-  const container = document.getElementById(`${prefix}-preview-container`);
-  const status = document.getElementById(`${prefix}-img-status`);
-
-  if (status) status.textContent = "Compressing & uploading...";
-  if (container) container.style.display = 'flex';
-
+// Resize and upload any product or flavor photo through the same optimized path.
+const uploadCompressedImage = file => new Promise((resolve, reject) => {
   const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = (e) => {
+  reader.onerror = () => reject(new Error('Could not read the selected image.'));
+  reader.onload = event => {
     const img = new Image();
-    img.src = e.target.result;
+    img.onerror = () => reject(new Error('The selected file is not a readable image.'));
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      // Keep enough source detail for product cards and the larger detail view,
-      // while avoiding upscaling small images or storing oversized originals.
-      const MAX_DIMENSION = 1200;
-      const scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height));
+      const maxDimension = 1200;
+      const scale = Math.min(1, maxDimension / Math.max(img.width, img.height));
       const width = Math.round(img.width * scale);
       const height = Math.round(img.height * scale);
-
       canvas.width = width;
       canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
-
-      // Convert canvas to binary blob and upload
-      canvas.toBlob(async (blob) => {
-        const formData = new FormData();
-        formData.append('image', blob, file.name);
-
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      canvas.toBlob(async blob => {
+        if (!blob) return reject(new Error('Could not compress the selected image.'));
         try {
-          const res = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData
-          });
-          const data = await res.json();
-          if (data.url) {
-            uploadedImageBase64 = data.url; // Save the path returned by Node (e.g. /uploads/filename.jpg)
-            preview.src = getImgUrl(data.url);
-            if (status) status.textContent = "Uploaded successfully.";
-          } else {
-            throw new Error("Upload failed.");
-          }
-        } catch (err) {
-          console.error("Image upload error:", err);
-          if (status) status.textContent = "Upload failed.";
-          showToast("Image upload failed.", "warning");
+          const formData = new FormData();
+          formData.append('image', blob, file.name.replace(/\.[^.]+$/, '') + '.jpg');
+          const response = await fetch('/api/upload', { method: 'POST', body: formData });
+          const data = await response.json();
+          if (!response.ok || !data.url) throw new Error(data.error || 'Image upload failed.');
+          resolve(data.url);
+        } catch (error) {
+          reject(error);
         }
       }, 'image/jpeg', 0.92);
     };
+    img.src = event.target.result;
   };
+  reader.readAsDataURL(file);
+});
+
+window.previewUpload = async (event, prefix) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const preview = document.getElementById(`${prefix}-img-preview`);
+  const container = document.getElementById(`${prefix}-preview-container`);
+  const status = document.getElementById(`${prefix}-img-status`);
+  if (status) status.textContent = 'Compressing & uploading...';
+  const uploadArea = document.getElementById(`${prefix}-img-upload-area`);
+  if (uploadArea) uploadArea.dataset.uploading = 'true';
+  if (container) container.style.display = 'flex';
+  try {
+    uploadedImageBase64 = await uploadCompressedImage(file);
+    preview.src = getImgUrl(uploadedImageBase64);
+    if (status) status.textContent = 'Uploaded successfully.';
+  } catch (error) {
+    console.error('Image upload error:', error);
+    if (status) status.textContent = 'Upload failed.';
+    showToast(error.message || 'Image upload failed.', 'warning');
+  } finally {
+    if (uploadArea) uploadArea.dataset.uploading = 'false';
+  }
+};
+
+window.addFlavorRow = (flavor = {}) => {
+  const rows = document.getElementById('prod-flavor-rows');
+  if (!rows) return;
+  const name = typeof flavor === 'string' ? flavor : flavor?.name || '';
+  const image = typeof flavor === 'string' ? '' : flavor?.image || '';
+  if (name.trim().toLowerCase() === 'n/a') return;
+  const row = document.createElement('div');
+  row.className = 'flavor-admin-row';
+  row.dataset.image = image;
+  row.innerHTML = `
+    <div class="flavor-admin-row-head">
+      <div>
+        <label>Flavor name</label>
+        <input class="form-input flavor-admin-name" type="text" maxlength="100" value="${escapeHtml(name)}" placeholder="e.g. Chocolate">
+      </div>
+      <button type="button" class="flavor-remove-btn" aria-label="Remove flavor" title="Remove flavor" onclick="this.closest('.flavor-admin-row').remove()"><i class="fas fa-trash"></i></button>
+    </div>
+    <div class="flavor-admin-image-fields">
+      <div>
+        <label>Upload flavor photo</label>
+        <input class="flavor-admin-file" type="file" accept="image/jpeg,image/png,image/webp" onchange="previewFlavorUpload(event)">
+      </div>
+      <div>
+        <label>Or paste image URL</label>
+        <input class="form-input flavor-admin-url" type="text" value="${escapeHtml(image)}" placeholder="https://... or /uploads/..." onchange="previewFlavorUrl(this)">
+      </div>
+      <img class="flavor-admin-preview" src="${image ? escapeHtml(getImgUrl(image)) : ''}" alt="Flavor image preview" style="${image ? '' : 'display:none'}">
+      <span class="flavor-admin-status">${image ? 'Flavor image ready.' : 'No separate photo yet; the main product image will be used.'}</span>
+    </div>`;
+  rows.appendChild(row);
+};
+
+window.previewFlavorUpload = async event => {
+  const file = event.target.files[0];
+  const row = event.target.closest('.flavor-admin-row');
+  if (!file || !row) return;
+  const preview = row.querySelector('.flavor-admin-preview');
+  const status = row.querySelector('.flavor-admin-status');
+  row.dataset.uploading = 'true';
+  status.textContent = 'Compressing & uploading...';
+  try {
+    row.dataset.image = await uploadCompressedImage(file);
+    row.querySelector('.flavor-admin-url').value = row.dataset.image;
+    preview.src = getImgUrl(row.dataset.image);
+    preview.style.display = 'block';
+    status.textContent = 'Flavor photo uploaded.';
+  } catch (error) {
+    console.error('Flavor image upload error:', error);
+    status.textContent = 'Upload failed.';
+    showToast(error.message || 'Flavor image upload failed.', 'warning');
+  } finally {
+    row.dataset.uploading = 'false';
+  }
+};
+
+window.previewFlavorUrl = input => {
+  const row = input.closest('.flavor-admin-row');
+  if (!row) return;
+  const image = input.value.trim();
+  const preview = row.querySelector('.flavor-admin-preview');
+  const status = row.querySelector('.flavor-admin-status');
+  row.dataset.image = image;
+  const fileInput = row.querySelector('.flavor-admin-file');
+  if (fileInput) fileInput.value = '';
+  if (image) {
+    preview.src = getImgUrl(image);
+    preview.style.display = 'block';
+    status.textContent = 'Flavor image URL ready.';
+  } else {
+    preview.removeAttribute('src');
+    preview.style.display = 'none';
+    status.textContent = 'No separate photo yet; the main product image will be used.';
+  }
 };
 
 window.previewUrl = (url, prefix) => {
@@ -410,6 +484,7 @@ window.openAddProductModal = () => {
   document.getElementById('prod-preview-container').style.display = 'none';
   document.getElementById('prod-img-preview').src = '';
   document.getElementById('prod-img-status').textContent = '';
+  document.getElementById('prod-flavor-rows').replaceChildren();
 
   setSwitchValue('prod-active-toggle', true);
   openModal('product');
@@ -437,7 +512,14 @@ window.openEditProductModal = async (id) => {
   const flavorsList = parseArray(p.flavors);
   const detailsList = parseArray(p.details);
 
-  document.getElementById('prod-flavors').value = flavorsList.join(', ');
+  const flavorRows = document.getElementById('prod-flavor-rows');
+  flavorRows.replaceChildren();
+  flavorsList.forEach(flavor => {
+    const variant = typeof flavor === 'string'
+      ? { name: flavor, image: '' }
+      : { name: flavor?.name || '', image: flavor?.image || '' };
+    window.addFlavorRow(variant);
+  });
   document.getElementById('prod-desc').value = p.description || '';
   document.getElementById('prod-details').value = detailsList.join('\n');
 
@@ -469,7 +551,21 @@ window.saveProductForm = async (event) => {
   const oldPrice = oldPriceVal ? parseFloat(oldPriceVal) : null;
   const badge = (document.getElementById('prod-badge').value || '').trim() || null;
   const badgeType = (document.getElementById('prod-badge-type').value || '').trim() || null;
-  const flavors = document.getElementById('prod-flavors').value.split(',').map(f => f.trim()).filter(Boolean);
+  const flavorRows = Array.from(document.querySelectorAll('#prod-flavor-rows .flavor-admin-row'));
+  const productUploadArea = document.getElementById('prod-img-upload-area');
+  if (productUploadArea?.dataset.uploading === 'true' || flavorRows.some(row => row.dataset.uploading === 'true')) {
+    showToast('Wait for image uploads to finish before saving the product.', 'warning');
+    return;
+  }
+  const flavors = flavorRows.map(row => ({
+    name: row.querySelector('.flavor-admin-name').value.trim(),
+    image: row.dataset.image || ''
+  })).filter(flavor => flavor.name && flavor.name.toLowerCase() !== 'n/a');
+  const flavorNames = flavors.map(flavor => flavor.name.toLowerCase());
+  if (new Set(flavorNames).size !== flavorNames.length) {
+    showToast('Each flavor name must be unique.', 'warning');
+    return;
+  }
   const description = document.getElementById('prod-desc').value;
   const details = document.getElementById('prod-details').value.split('\n').map(d => d.trim()).filter(Boolean);
   const active = getSwitchValue('prod-active-toggle');
@@ -490,9 +586,16 @@ window.saveProductForm = async (event) => {
     }
   }
 
+  const emptyFlavorImage = flavors.find(flavor => !flavor.image);
+  if (emptyFlavorImage && !finalImage) {
+    showToast(`Add a photo for ${emptyFlavorImage.name}, or choose a main product image to use as a fallback.`, 'warning');
+    return;
+  }
+  const savedFlavors = flavors.map(flavor => ({ ...flavor, image: flavor.image || finalImage }));
+
   const payload = {
     name, categoryId, categoryName, stock, price, oldPrice,
-    badge, badgeType, flavors, description, details, active,
+    badge, badgeType, flavors: savedFlavors, description, details, active,
     image: finalImage || ''
   };
 
