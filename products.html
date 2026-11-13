@@ -55,10 +55,23 @@
       background: radial-gradient(circle at 50% 50%, rgba(232,0,13,0.1) 0%, transparent 70%);
     }
     .modal-img { width: 100%; max-width: 380px; max-height: min(56vh, 460px); object-fit: contain; position: relative; z-index: 1; filter: drop-shadow(0 16px 28px rgba(25,35,45,0.14)); }
+    .modal-img { touch-action: pan-y; user-select: none; -webkit-user-drag: none; }
     .modal-image-thumbs { display: flex; justify-content: center; gap: 8px; width: 100%; max-width: 360px; overflow-x: auto; position: relative; z-index: 1; padding: 2px 2px 5px; }
     .modal-image-thumb { flex: 0 0 56px; width: 56px; height: 56px; padding: 3px; border-radius: 8px; border: 1px solid rgba(32,39,46,0.14); background: #fff; cursor: pointer; }
     .modal-image-thumb img { width: 100%; height: 100%; border-radius: 5px; object-fit: cover; }
     .modal-image-thumb.active, .modal-image-thumb:hover { border-color: var(--red); box-shadow: 0 0 0 1px var(--red); }
+    .modal-gallery-arrow {
+      position: absolute; top: 48%; z-index: 4; transform: translateY(-50%);
+      width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(32,39,46,0.14);
+      background: rgba(255,255,255,0.94); color: #20272E; box-shadow: 0 4px 14px rgba(25,35,45,0.12);
+      display: grid; place-items: center; cursor: pointer; transition: var(--transition);
+    }
+    .modal-gallery-arrow:hover { background: var(--red); border-color: var(--red); color: #fff; }
+    .modal-gallery-arrow:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+    .modal-gallery-prev { left: 12px; }
+    .modal-gallery-next { right: 12px; }
+    .modal-gallery-arrow[hidden] { display: none; }
+    .modal-image-position { color: var(--gray); font-size: 0.72rem; position: relative; z-index: 1; }
 
     .modal-info-side { padding: 40px; display: flex; flex-direction: column; gap: 16px; }
 
@@ -255,6 +268,9 @@
       .modal-img-side { border-radius: 20px 20px 0 0; }
       .modal-img-side { min-height: 250px; padding: 24px; }
       .modal-img { max-width: 280px; max-height: 260px; object-fit: contain; }
+      .modal-gallery-arrow { width: 36px; height: 36px; }
+      .modal-gallery-prev { left: 8px; }
+      .modal-gallery-next { right: 8px; }
       .modal-image-thumbs { justify-content: flex-start; }
       .modal-info-side { padding: 24px 20px; gap: 14px; }
       .modal-name { font-size: 1.55rem; letter-spacing: 1px; overflow-wrap: anywhere; }
@@ -365,7 +381,10 @@
       <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
       <div class="modal-img-side">
         <img src="" alt="" class="modal-img" id="modalImg">
+        <button type="button" class="modal-gallery-arrow modal-gallery-prev" id="modalGalleryPrev" aria-label="Previous image" hidden><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
+        <button type="button" class="modal-gallery-arrow modal-gallery-next" id="modalGalleryNext" aria-label="Next image" hidden><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
         <div class="modal-image-thumbs" id="modalImageThumbs" aria-label="Product images"></div>
+        <div class="modal-image-position" id="modalImagePosition" aria-live="polite"></div>
       </div>
       <div class="modal-info-side" id="modalInfoSide">
         <!-- Filled dynamically -->
@@ -555,30 +574,66 @@
       ...parseArray(product.images).filter(image => typeof image === 'string')
     ].filter(image => image && image.trim()))];
 
-    function renderModalGallery(images, altText) {
-      const galleryImages = [...new Set(images.map(getCleanImgUrl))];
+    let modalGalleryImages = [];
+    let modalGalleryIndex = 0;
+    let modalGalleryAlt = '';
+
+    function showModalGalleryImage(index) {
+      if (!modalGalleryImages.length) return;
+      modalGalleryIndex = (index + modalGalleryImages.length) % modalGalleryImages.length;
       const imageEl = document.getElementById('modalImg');
       const thumbs = document.getElementById('modalImageThumbs');
-      imageEl.src = galleryImages[0] || 'assets/logo.png';
-      imageEl.alt = altText;
-      thumbs.innerHTML = galleryImages.length > 1 ? galleryImages.map((image, index) => `
-        <button type="button" class="modal-image-thumb ${index === 0 ? 'active' : ''}" data-gallery-image="${escapeHtml(image)}" aria-label="View image ${index + 1}" aria-pressed="${index === 0}">
+      const imageUrl = modalGalleryImages[modalGalleryIndex];
+      imageEl.src = imageUrl;
+      imageEl.alt = modalGalleryAlt;
+      thumbs.querySelectorAll('.modal-image-thumb').forEach((thumb, thumbIndex) => {
+        thumb.classList.toggle('active', thumbIndex === modalGalleryIndex);
+        thumb.setAttribute('aria-pressed', String(thumbIndex === modalGalleryIndex));
+      });
+      const position = document.getElementById('modalImagePosition');
+      position.textContent = modalGalleryImages.length > 1 ? `${modalGalleryIndex + 1} / ${modalGalleryImages.length}` : '';
+      const addButton = document.querySelector('#modalInfoSide [data-add-cart]');
+      if (addButton) addButton.dataset.img = imageUrl;
+    }
+
+    function renderModalGallery(images, altText) {
+      modalGalleryImages = [...new Set(images.map(getCleanImgUrl))];
+      modalGalleryIndex = 0;
+      modalGalleryAlt = altText;
+      const thumbs = document.getElementById('modalImageThumbs');
+      const hasMultipleImages = modalGalleryImages.length > 1;
+      thumbs.innerHTML = hasMultipleImages ? modalGalleryImages.map((image, index) => `
+        <button type="button" class="modal-image-thumb ${index === 0 ? 'active' : ''}" data-gallery-index="${index}" aria-label="View image ${index + 1}" aria-pressed="${index === 0}">
           <img src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.src='assets/logo.png'">
         </button>`).join('') : '';
-      thumbs.querySelectorAll('[data-gallery-image]').forEach(button => {
+      document.getElementById('modalGalleryPrev').hidden = !hasMultipleImages;
+      document.getElementById('modalGalleryNext').hidden = !hasMultipleImages;
+      thumbs.querySelectorAll('[data-gallery-index]').forEach(button => {
         button.addEventListener('click', () => {
-          thumbs.querySelectorAll('.modal-image-thumb').forEach(thumb => {
-            thumb.classList.toggle('active', thumb === button);
-            thumb.setAttribute('aria-pressed', String(thumb === button));
-          });
-          imageEl.src = button.dataset.galleryImage;
-          const addButton = document.querySelector('#modalInfoSide [data-add-cart]');
-          if (addButton) addButton.dataset.img = button.dataset.galleryImage;
+          showModalGalleryImage(Number(button.dataset.galleryIndex));
         });
       });
-      const addButton = document.querySelector('#modalInfoSide [data-add-cart]');
-      if (addButton) addButton.dataset.img = galleryImages[0] || 'assets/logo.png';
+      showModalGalleryImage(0);
     }
+
+    document.getElementById('modalGalleryPrev').addEventListener('click', () => showModalGalleryImage(modalGalleryIndex - 1));
+    document.getElementById('modalGalleryNext').addEventListener('click', () => showModalGalleryImage(modalGalleryIndex + 1));
+
+    let gallerySwipeStart = null;
+    document.getElementById('modalImg').addEventListener('touchstart', event => {
+      if (event.touches.length === 1) {
+        gallerySwipeStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+      }
+    }, { passive: true });
+    document.getElementById('modalImg').addEventListener('touchend', event => {
+      if (!gallerySwipeStart || !event.changedTouches.length) return;
+      const deltaX = event.changedTouches[0].clientX - gallerySwipeStart.x;
+      const deltaY = event.changedTouches[0].clientY - gallerySwipeStart.y;
+      gallerySwipeStart = null;
+      if (Math.abs(deltaX) < 45 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+      showModalGalleryImage(modalGalleryIndex + (deltaX < 0 ? 1 : -1));
+    }, { passive: true });
+    document.getElementById('modalImg').addEventListener('touchcancel', () => { gallerySwipeStart = null; }, { passive: true });
 
     // -- Load categories
     async function loadCategories() {
@@ -819,8 +874,15 @@
       }
     });
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && document.getElementById('productModal').classList.contains('open')) {
+      const modalIsOpen = document.getElementById('productModal').classList.contains('open');
+      if (!modalIsOpen) return;
+      if (e.key === 'Escape') {
         window.closeProductModal();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        const target = e.target;
+        if (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+        e.preventDefault();
+        showModalGalleryImage(modalGalleryIndex + (e.key === 'ArrowRight' ? 1 : -1));
       }
     });
 
